@@ -6,6 +6,7 @@ import { Search, Plus, SlidersHorizontal } from 'lucide-react';
 export default function Hero({
   target,
   onTargetChange,
+  onTargetBlur,
   onGenerate,
   categories,
   selectedFilter,
@@ -32,8 +33,9 @@ export default function Hero({
             type="text"
             value={target}
             onChange={(e) => onTargetChange(e.target.value)}
+            onBlur={onTargetBlur}
             onKeyDown={(e) => e.key === 'Enter' && onGenerate()}
-            placeholder="Hedef alan adı (örn: target.com)..."
+            placeholder="Hedef alan adı (örn: google veya target.com)..."
             className="search-input search-input-hero"
             autoFocus
           />

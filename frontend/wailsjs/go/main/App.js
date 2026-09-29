@@ -30,6 +30,14 @@ export function GetTemplates() {
   return window['go']['main']['App']['GetTemplates']();
 }
 
+export function ProbeTarget(arg1) {
+  return window['go']['main']['App']['ProbeTarget'](arg1);
+}
+
+export function ProbeURL(arg1) {
+  return window['go']['main']['App']['ProbeURL'](arg1);
+}
+
 export function RenameCategory(arg1, arg2) {
   return window['go']['main']['App']['RenameCategory'](arg1, arg2);
 }

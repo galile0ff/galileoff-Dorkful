@@ -12,6 +12,7 @@ type App struct {
 	ctx           context.Context
 	dorkService   *services.DorkService
 	exportService *services.ExportService
+	probeService  *services.ProbeService
 }
 
 // NewApp, servis bağımlılıklarıyla birlikte yeni bir App örneği oluşturur.
@@ -19,6 +20,7 @@ func NewApp() *App {
 	return &App{
 		dorkService:   services.NewDorkService(),
 		exportService: services.NewExportService(),
+		probeService:  services.NewProbeService(),
 	}
 }
 
@@ -83,4 +85,14 @@ func (a *App) ResetToDefaults() error {
 // GetCategories, sistemdeki tüm benzersiz kategori isimlerini döner.
 func (a *App) GetCategories() []string {
 	return a.dorkService.GetCategories()
+}
+
+// ProbeTarget, hedefin HTTP/HTTPS canlılık durumunu, durum kodunu, yanıt süresini ve sunucu başlığını kontrol eder.
+func (a *App) ProbeTarget(target string) models.ProbeResult {
+	return a.probeService.ProbeTarget(target)
+}
+
+// ProbeURL, doğrudan verilen tam bir URL adresini test eder.
+func (a *App) ProbeURL(url string) models.ProbeResult {
+	return a.probeService.ProbeURL(url)
 }

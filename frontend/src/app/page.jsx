@@ -9,6 +9,7 @@ import DorkList from '../components/DorkList';
 import Toast from '../components/Toast';
 import AddDorkModal from '../components/AddDorkModal';
 import ManageDorksModal from '../components/ManageDorksModal';
+import TargetProbeCard from '../components/TargetProbeCard';
 
 export default function Home() {
   const {
@@ -28,9 +29,14 @@ export default function Home() {
     setIsAddModalOpen,
     isManageModalOpen,
     setIsManageModalOpen,
+    probeResult,
+    isProbing,
+    runProbeTarget,
+    handleProbeURL,
     scrollRef,
     onScroll,
     scrollToTop,
+    handleTargetBlur,
     handleGenerate,
     handleAddCustomDork,
     handleUpdateDork,
@@ -91,6 +97,7 @@ export default function Home() {
         isVisible={navVisible}
         target={target}
         onTargetChange={setTarget}
+        onTargetBlur={handleTargetBlur}
         onGenerate={handleGenerate}
         categories={categories}
         selectedFilter={filter}
@@ -112,6 +119,7 @@ export default function Home() {
         <Hero
           target={target}
           onTargetChange={setTarget}
+          onTargetBlur={handleTargetBlur}
           onGenerate={handleGenerate}
           categories={categories}
           selectedFilter={filter}
@@ -121,13 +129,24 @@ export default function Home() {
           onOpenManageModal={() => setIsManageModalOpen(true)}
         />
 
+        {/* Canlı Hedef HTTP Denetim Kartı (Durum Kodu, Yanıt Süresi, Sunucu Başlığı) */}
+        <div className="flex justify-center px-6 -mt-8 mb-8 relative z-20">
+          <TargetProbeCard
+            probeResult={probeResult}
+            isProbing={isProbing}
+            onReProbe={() => runProbeTarget()}
+          />
+        </div>
+
         {/* Dork Sonuç Listesi */}
         <DorkList
           totalDorksCount={dorks.length}
           filteredDorks={filteredDorks}
+          target={target}
           onCopy={copyToClipboard}
           onSearch={executeSearch}
           onExport={handleExport}
+          onProbeURL={handleProbeURL}
         />
       </div>
     </div>

@@ -16,6 +16,10 @@ export function GetCategories():Promise<Array<string>>;
 
 export function GetTemplates():Promise<Array<models.Template>>;
 
+export function ProbeTarget(arg1:string):Promise<models.ProbeResult>;
+
+export function ProbeURL(arg1:string):Promise<models.ProbeResult>;
+
 export function RenameCategory(arg1:string,arg2:string):Promise<void>;
 
 export function ResetToDefaults():Promise<void>;

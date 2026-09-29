@@ -11,10 +11,13 @@ import {
   DeleteTemplate,
   RenameCategory,
   DeleteCategory,
-  ResetToDefaults
+  ResetToDefaults,
+  ProbeTarget,
+  ProbeURL
 } from '../../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 import { CATEGORIES, matchCategory } from '../constants/categories';
+import { formatTargetDomain } from '../utils/targetHelper';
 
 // useDorkful hook'u: Uygulamanın tüm durum ve servis yönetimini sağlar
 export function useDorkful() {
@@ -28,6 +31,8 @@ export function useDorkful() {
   const [splashDone, setSplashDone] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [probeResult, setProbeResult] = useState(null);
+  const [isProbing, setIsProbing] = useState(false);
   const scrollRef = useRef(null);
 
   // Bildirim gösterme
@@ -68,21 +73,65 @@ export function useDorkful() {
     }
   }, []);
 
-  // Go backend üzerinden dork üretme
+  // Hedef alan adının canlılık durumunu ve HTTP başlıklarını denetleme
+  const runProbeTarget = useCallback(async (targetToProbe) => {
+    const t = targetToProbe !== undefined ? targetToProbe : target;
+    if (!t || !t.trim()) return;
+    setIsProbing(true);
+    try {
+      const res = await ProbeTarget(t);
+      setProbeResult(res);
+    } catch (e) {
+      console.warn("ProbeTarget denetim hatası:", e);
+      setProbeResult({ isAlive: false, error: String(e) });
+    } finally {
+      setIsProbing(false);
+    }
+  }, [target]);
+
+  // Tekil bir endpoint / URL için HTTP denetimi çalıştırma
+  const handleProbeURL = useCallback(async (url) => {
+    try {
+      return await ProbeURL(url);
+    } catch (e) {
+      return { isAlive: false, error: String(e) };
+    }
+  }, []);
+
+  // Arama kutusundan odak çıkınca (blur) otomatik tamamlama
+  const handleTargetBlur = useCallback(() => {
+    if (target.trim()) {
+      const formatted = formatTargetDomain(target);
+      if (formatted !== target) {
+        setTarget(formatted);
+      }
+    }
+  }, [target]);
+
+  // Go backend üzerinden dork üretme ve eşzamanlı hedef canlılık testi
   const handleGenerate = useCallback(async (customTarget) => {
-    const activeTarget = customTarget !== undefined ? customTarget : target;
-    if (!activeTarget.trim()) {
-      showToast("Hedef domain girilmedi.");
+    const rawTarget = customTarget !== undefined ? customTarget : target;
+    const formatted = formatTargetDomain(rawTarget);
+
+    if (!formatted) {
+      showToast("Hedef alan adı girilmedi.");
       return;
     }
+
+    // Arama kutusundaki hedefi de normalize edilmiş haliyle güncelle (ör: 'google' -> 'google.com')
+    setTarget(formatted);
+
+    // Hedef canlılık denetimini paralel başlat
+    runProbeTarget(formatted);
+
     try {
-      const res = await GenerateDorks(activeTarget);
+      const res = await GenerateDorks(formatted);
       setDorks(res || []);
       showToast(`${res.length} Sorgu Tespit Edildi.`);
     } catch (e) {
       showToast(`Hata: ${e}`);
     }
-  }, [target, showToast]);
+  }, [target, showToast, runProbeTarget]);
 
   // Çalışma zamanında yeni özel dork ekleme
   const handleAddCustomDork = useCallback(async ({ template, description, category }) => {
@@ -233,9 +282,14 @@ export function useDorkful() {
     setIsAddModalOpen,
     isManageModalOpen,
     setIsManageModalOpen,
+    probeResult,
+    isProbing,
+    runProbeTarget,
+    handleProbeURL,
     scrollRef,
     onScroll,
     scrollToTop,
+    handleTargetBlur,
     handleGenerate,
     handleAddCustomDork,
     handleUpdateDork,

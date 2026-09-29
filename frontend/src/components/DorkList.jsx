@@ -7,9 +7,11 @@ import DorkCard from './DorkCard';
 export default function DorkList({
   totalDorksCount,
   filteredDorks,
+  target,
   onCopy,
   onSearch,
-  onExport
+  onExport,
+  onProbeURL
 }) {
   return (
     <div className="max-w-3xl mx-auto px-6 pb-32 flex flex-col gap-5 items-center">
@@ -28,8 +30,10 @@ export default function DorkList({
             key={`${dork.query}-${i}`}
             dork={dork}
             index={i}
+            target={target}
             onCopy={onCopy}
             onSearch={onSearch}
+            onProbeURL={onProbeURL}
           />
         ))
       )}

@@ -16,6 +16,34 @@ export namespace models {
 	        this.category = source["category"];
 	    }
 	}
+	export class ProbeResult {
+	    target: string;
+	    url: string;
+	    statusCode: number;
+	    statusText: string;
+	    responseTimeMs: number;
+	    server: string;
+	    contentType: string;
+	    isAlive: boolean;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProbeResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.target = source["target"];
+	        this.url = source["url"];
+	        this.statusCode = source["statusCode"];
+	        this.statusText = source["statusText"];
+	        this.responseTimeMs = source["responseTimeMs"];
+	        this.server = source["server"];
+	        this.contentType = source["contentType"];
+	        this.isAlive = source["isAlive"];
+	        this.error = source["error"];
+	    }
+	}
 	export class Template {
 	    Template: string;
 	    Description: string;

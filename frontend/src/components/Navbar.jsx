@@ -7,6 +7,7 @@ export default function Navbar({
   isVisible,
   target,
   onTargetChange,
+  onTargetBlur,
   onGenerate,
   categories,
   selectedFilter,
@@ -33,6 +34,7 @@ export default function Navbar({
             type="text"
             value={target}
             onChange={(e) => onTargetChange(e.target.value)}
+            onBlur={onTargetBlur}
             onKeyDown={(e) => e.key === 'Enter' && onGenerate()}
             placeholder="Target..."
             className="search-input-nav"

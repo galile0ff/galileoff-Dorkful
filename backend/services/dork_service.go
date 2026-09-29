@@ -35,9 +35,32 @@ func NewDorkService() *DorkService {
 	return service
 }
 
+// CleanTargetDomain, alan adını temizler, protokol ve yolları ayıklar, gerekirse '.com' uzantısı ekler.
+func CleanTargetDomain(target string) string {
+	clean := strings.TrimSpace(target)
+	clean = strings.TrimPrefix(clean, "https://")
+	clean = strings.TrimPrefix(clean, "http://")
+	if idx := strings.Index(clean, "/"); idx != -1 {
+		clean = clean[:idx]
+	}
+	if idx := strings.Index(clean, "?"); idx != -1 {
+		clean = clean[:idx]
+	}
+	if idx := strings.Index(clean, "#"); idx != -1 {
+		clean = clean[:idx]
+	}
+	clean = strings.TrimSpace(clean)
+
+	// Nokta içermiyorsa ve 'localhost' değilse varsayılan olarak '.com' ekle
+	if clean != "" && !strings.Contains(clean, ".") && !strings.EqualFold(clean, "localhost") {
+		clean = clean + ".com"
+	}
+	return strings.ToLower(clean)
+}
+
 // GenerateDorks, verilen hedef alan adı veya IP için dork listesini oluşturur.
 func (s *DorkService) GenerateDorks(target string) []models.Dork {
-	cleanTarget := strings.TrimSpace(target)
+	cleanTarget := CleanTargetDomain(target)
 	if cleanTarget == "" {
 		return []models.Dork{}
 	}

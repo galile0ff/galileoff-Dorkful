@@ -2,53 +2,85 @@ package main
 
 import (
 	"context"
-	"dorkapp/backend"
-	"encoding/json"
-	"fmt"
-	"os"
-	"path/filepath"
+
+	"dorkapp/backend/models"
+	"dorkapp/backend/services"
 )
 
-// App struct
+// App, Wails ile Go backend iş mantığı arasındaki köprü (controller) yapısıdır.
 type App struct {
-	ctx context.Context
+	ctx           context.Context
+	dorkService   *services.DorkService
+	exportService *services.ExportService
 }
 
-// NewApp creates a new App application struct
+// NewApp, servis bağımlılıklarıyla birlikte yeni bir App örneği oluşturur.
 func NewApp() *App {
-	return &App{}
+	return &App{
+		dorkService:   services.NewDorkService(),
+		exportService: services.NewExportService(),
+	}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
+// startup, Wails uygulaması başlatıldığında çağrılır.
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// GenerateDorks returns a list of generated dorks for a target
-func (a *App) GenerateDorks(target string) []backend.Dork {
-	return backend.GenerateDorks(target)
+// GenerateDorks, verilen hedef için dork listesi üretir.
+func (a *App) GenerateDorks(target string) []models.Dork {
+	return a.dorkService.GenerateDorks(target)
 }
 
-// ExportJSON exports the generated dorks to a specified location (defaulting to Desktop or app dir)
-func (a *App) ExportJSON(dorks []backend.Dork) (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	
-	// Default to Desktop
-	filePath := filepath.Join(homeDir, "Desktop", "dorks.json")
-	
-	fileBytes, err := json.MarshalIndent(dorks, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("JSON oluşturma hatası: %v", err)
-	}
+// ExportJSON, dork listesini JSON dosyası olarak kullanıcının masaüstüne kaydeder.
+func (a *App) ExportJSON(dorks []models.Dork) (string, error) {
+	return a.exportService.ExportJSON(dorks)
+}
 
-	err = os.WriteFile(filePath, fileBytes, 0644)
-	if err != nil {
-		return "", fmt.Errorf("Dosya yazma hatası: %v", err)
-	}
+// GetTemplates, kayıtlı tüm şablonları döner.
+func (a *App) GetTemplates() []models.Template {
+	return a.dorkService.GetTemplates()
+}
 
-	return filePath, nil
+// AddCustomDork, yeni bir özel dork şablonu ekler ve saklar.
+func (a *App) AddCustomDork(template string, description string, category string) error {
+	return a.dorkService.AddTemplate(models.Template{
+		Template:    template,
+		Description: description,
+		Category:    category,
+	})
+}
+
+// UpdateTemplate, mevcut bir dork şablonunu günceller.
+func (a *App) UpdateTemplate(index int, template string, description string, category string) error {
+	return a.dorkService.UpdateTemplate(index, models.Template{
+		Template:    template,
+		Description: description,
+		Category:    category,
+	})
+}
+
+// DeleteTemplate, belirtilen indeksteki dork şablonunu siler.
+func (a *App) DeleteTemplate(index int) error {
+	return a.dorkService.DeleteTemplate(index)
+}
+
+// RenameCategory, bir kategorinin adını tüm şablonlarda günceller.
+func (a *App) RenameCategory(oldCategory string, newCategory string) error {
+	return a.dorkService.RenameCategory(oldCategory, newCategory)
+}
+
+// DeleteCategory, belirtilen kategoriye ait tüm dorkları siler.
+func (a *App) DeleteCategory(category string) error {
+	return a.dorkService.DeleteCategory(category)
+}
+
+// ResetToDefaults, dork şablonlarını fabrika ayarlarına sıfırlar.
+func (a *App) ResetToDefaults() error {
+	return a.dorkService.ResetToDefaults()
+}
+
+// GetCategories, sistemdeki tüm benzersiz kategori isimlerini döner.
+func (a *App) GetCategories() []string {
+	return a.dorkService.GetCategories()
 }

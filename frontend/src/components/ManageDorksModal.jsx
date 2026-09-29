@@ -108,15 +108,15 @@ export default function ManageDorksModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
       <div
-        className="relative w-full max-w-3xl h-[85vh] bg-neutral-950 border border-white/15 rounded-2xl flex flex-col shadow-2xl text-white shadow-white/5 overflow-hidden"
+        className="relative w-full max-w-3xl h-[85vh] bg-[#0b0b0e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col shadow-2xl text-white shadow-black/90 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Üst Başlık & Sekmeler */}
-        <div className="px-6 pt-5 pb-3 border-b border-white/10 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white/5 border border-white/10 text-white">
+            <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white/80 shadow-inner">
               <SlidersHorizontal size={18} />
             </div>
             <div>

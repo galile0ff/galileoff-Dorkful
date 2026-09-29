@@ -62,8 +62,10 @@ func ResolveMitreAttack(category string, templateOrQuery string) *models.MitreAt
 	catLower := strings.ToLower(category)
 	qLower := strings.ToLower(templateOrQuery)
 
-	// 1. Kimlik Bilgileri ve Parolalar (Credential Access)
-	if catLower == "sensitive data" ||
+	// 1. Kimlik Bilgileri, Sırlar ve Veritabanı Yedekleri (Credential Access - TA0006)
+	if strings.Contains(catLower, "secret") ||
+		strings.Contains(catLower, "sensitive") ||
+		strings.Contains(catLower, "database") ||
 		strings.Contains(qLower, "password") ||
 		strings.Contains(qLower, "pwd") ||
 		strings.Contains(qLower, "api_key") ||
@@ -78,8 +80,9 @@ func ResolveMitreAttack(category string, templateOrQuery string) *models.MitreAt
 		return MitreCredentialsInFiles
 	}
 
-	// 2. Yönetim Panelleri ve Giriş Noktaları (Initial Access)
-	if catLower == "admin panels" ||
+	// 2. Yönetim Panelleri ve Yetkili Girişleri (Initial Access - TA0001)
+	if strings.Contains(catLower, "admin") ||
+		strings.Contains(catLower, "portal") ||
 		strings.Contains(qLower, "inurl:admin") ||
 		strings.Contains(qLower, "inurl:login") ||
 		strings.Contains(qLower, "wp-admin") ||
@@ -91,24 +94,34 @@ func ResolveMitreAttack(category string, templateOrQuery string) *models.MitreAt
 		return MitreExploitPublicFacing
 	}
 
-	// 3. Açık Dizin Listelemeleri (Search Victim-Owned Websites)
-	if catLower == "open directories" ||
+	// 3. Açık Dizinler, Git ve Dosya İfşaları (Reconnaissance - Search Victim-Owned Websites - TA0043 / T1594)
+	if strings.Contains(catLower, "open director") ||
+		strings.Contains(catLower, "git") ||
+		strings.Contains(catLower, "files") ||
 		strings.Contains(qLower, "index of") ||
+		strings.Contains(qLower, "/.git") ||
 		strings.Contains(qLower, "parent directory") {
 		return MitreSearchVictimWebsites
 	}
 
-	// 4. API'lar ve Teknik Dökümanlar (Search Technical Databases)
-	if catLower == "apis" ||
+	// 4. API'lar, Bulut Kovaları ve Hata İfşaları (Reconnaissance - Search Open Technical Databases - T1596)
+	if strings.Contains(catLower, "api") ||
+		strings.Contains(catLower, "cloud") ||
+		strings.Contains(catLower, "bucket") ||
+		strings.Contains(catLower, "error") ||
+		strings.Contains(catLower, "debug") ||
 		strings.Contains(qLower, "swagger") ||
 		strings.Contains(qLower, "graphql") ||
-		strings.Contains(qLower, "api-docs") ||
-		strings.Contains(qLower, "inurl:api") {
+		strings.Contains(qLower, "s3.amazonaws.com") ||
+		strings.Contains(qLower, "blob.core.windows.net") ||
+		strings.Contains(qLower, "traceback") ||
+		strings.Contains(qLower, "fatal error") {
 		return MitreTechnicalDatabases
 	}
 
-	// 5. Cihazlar ve Kameralar (Gather Victim Host Info: Software)
-	if catLower == "cameras / iot" ||
+	// 5. Cihazlar, Kameralar ve Ağ Servisleri (Gather Victim Host Info: Software - T1592.002)
+	if strings.Contains(catLower, "camera") ||
+		strings.Contains(catLower, "iot") ||
 		strings.Contains(qLower, "webcam") ||
 		strings.Contains(qLower, "network camera") ||
 		strings.Contains(qLower, "router") ||
@@ -116,6 +129,6 @@ func ResolveMitreAttack(category string, templateOrQuery string) *models.MitreAt
 		return MitreGatherHostSoftware
 	}
 
-	// Varsayılan: Arama Motoru Üzerinden Keşif
+	// Varsayılan: Arama Motoru Üzerinden Keşif (T1593.002)
 	return MitreSearchEngines
 }

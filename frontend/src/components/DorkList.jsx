@@ -1,6 +1,6 @@
 "use client";
 
-import { MousePointer2, Download } from 'lucide-react';
+import { MousePointer2 } from 'lucide-react';
 import DorkCard from './DorkCard';
 
 // Dork sonuç listesi ve boş durum (empty state) bileşeni
@@ -11,16 +11,15 @@ export default function DorkList({
   findings = [],
   onCopy,
   onSearch,
-  onExport,
   onProbeURL,
   onFlag
 }) {
   return (
-    <div className="max-w-3xl mx-auto px-6 pb-32 flex flex-col gap-5 items-center">
+    <div className={`max-w-3xl mx-auto px-6 flex flex-col gap-5 items-center w-full ${totalDorksCount > 0 ? 'pb-24' : 'pb-2'}`}>
       {totalDorksCount === 0 ? (
-        <div className="empty-state">
-          <MousePointer2 size={56} strokeWidth={1} className="mb-4 animate-bounce" />
-          <p className="empty-state-text">Operasyon Bekliyor</p>
+        <div className="flex flex-col items-center justify-center opacity-30 mt-4 select-none">
+          <MousePointer2 size={32} strokeWidth={1} className="mb-2 text-white/60 animate-bounce" />
+          <p className="text-[10px] tracking-[0.4em] uppercase font-mono text-white/60">Operasyon Bekliyor</p>
         </div>
       ) : filteredDorks.length === 0 ? (
         <p className="text-xs text-white/30 font-mono italic mt-16">
@@ -43,12 +42,6 @@ export default function DorkList({
             />
           );
         })
-      )}
-
-      {totalDorksCount > 0 && (
-        <button onClick={onExport} className="btn-export">
-          <Download size={14} /> Dışa Aktar
-        </button>
       )}
     </div>
   );

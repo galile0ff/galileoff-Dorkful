@@ -152,7 +152,7 @@ func (s *FindingService) ExportFindingsJSON() (string, error) {
 	}
 
 	reportData := map[string]interface{}{
-		"tool":         "Dorkful - galileoff CTI Tool",
+		"tool":         "Dorkful - galileoff DOrk Tool",
 		"generatedAt":  time.Now().Format(time.RFC3339),
 		"totalCount":   len(findingsCopy),
 		"mitreSummary": mitreMatrix,

@@ -55,9 +55,9 @@ export default function AddDorkModal({ isOpen, onClose, onAddDork, categories })
   const availableCategories = categories.filter((c) => c !== "All");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
       <div
-        className="relative w-full max-w-lg bg-neutral-950 border border-white/15 rounded-2xl p-6 shadow-2xl text-white shadow-white/5"
+        className="relative w-full max-w-lg bg-[#0b0b0e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 shadow-2xl text-white shadow-black/90"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Kapat Butonu */}

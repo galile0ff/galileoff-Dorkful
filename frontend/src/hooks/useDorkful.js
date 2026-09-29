@@ -19,11 +19,33 @@ import {
   UpdateFinding,
   DeleteFinding,
   ClearFindings,
-  ExportFindingsJSON
+  ExportFindingsJSON,
+  CreateWorkspace,
+  GetWorkspaces,
+  UpdateWorkspace,
+  DeleteWorkspace,
+  GetActiveWorkspaceID,
+  SetActiveWorkspaceID,
+  FetchSubdomains,
+  FetchWaybackURLs,
+  GenerateMultiEngineDorks
 } from '../../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 import { CATEGORIES, matchCategory } from '../constants/categories';
 import { formatTargetDomain } from '../utils/targetHelper';
+
+// Motor etiketleri formatlayıcı (Google, Github, Shodan, Censys, vb.)
+const ENGINE_LABELS = {
+  google: 'Google',
+  github: 'Github',
+  shodan: 'Shodan',
+  censys: 'Censys',
+  crtsh: 'CRT.sh',
+  wayback: 'Wayback'
+};
+
+const formatEngineName = (eng) =>
+  ENGINE_LABELS[eng?.toLowerCase()] || (eng ? eng.charAt(0).toUpperCase() + eng.slice(1).toLowerCase() : '');
 
 // useDorkful hook'u: Uygulamanın tüm durum ve servis yönetimini sağlar
 export function useDorkful() {
@@ -45,10 +67,43 @@ export function useDorkful() {
   const [isProbing, setIsProbing] = useState(false);
   const scrollRef = useRef(null);
 
+  // Çoklu Motor & Canlı Keşif State'leri
+  const [selectedEngine, setSelectedEngine] = useState("google"); // 'google' | 'github' | 'shodan' | 'censys' | 'crtsh' | 'wayback'
+  const [workspaces, setWorkspaces] = useState([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+
+  // CRT.sh ve Wayback Canlı Keşif Sonuçları
+  const [isReconModalOpen, setIsReconModalOpen] = useState(false);
+  const [reconType, setReconType] = useState('crtsh');
+  const [reconTarget, setReconTarget] = useState('');
+  const [subdomains, setSubdomains] = useState([]);
+  const [waybackUrls, setWaybackUrls] = useState([]);
+  const [isReconLoading, setIsReconLoading] = useState(false);
+
+  // Aktif çalışma alanı nesnesi
+  const activeWorkspace = useMemo(() => {
+    return workspaces.find(w => w.id === activeWorkspaceId) || null;
+  }, [workspaces, activeWorkspaceId]);
+
   // Bildirim gösterme
   const showToast = useCallback((msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // Çalışma alanlarını yükleme
+  const reloadWorkspaces = useCallback(async () => {
+    try {
+      const [wList, activeId] = await Promise.all([
+        GetWorkspaces(),
+        GetActiveWorkspaceID()
+      ]);
+      if (wList) setWorkspaces(wList);
+      if (activeId) setActiveWorkspaceId(activeId);
+    } catch (e) {
+      console.warn("Çalışma alanı yükleme hatası:", e);
+    }
   }, []);
 
   // Backend'den kayıtlı tüm bulguları yenileme
@@ -61,17 +116,21 @@ export function useDorkful() {
     }
   }, []);
 
-  // Backend'den kayıtlı tüm şablon, kategori ve bulguları yükleme
+  // Backend'den kayıtlı tüm şablon, kategori, bulgu ve çalışma alanlarını yükleme
   const reloadData = useCallback(async () => {
     try {
-      const [tList, cList, fList] = await Promise.all([
+      const [tList, cList, fList, wList, activeId] = await Promise.all([
         GetTemplates(),
         GetCategories(),
-        GetFindings()
+        GetFindings(),
+        GetWorkspaces(),
+        GetActiveWorkspaceID()
       ]);
       if (tList) setTemplates(tList);
       if (cList && cList.length > 0) setCategories(cList);
       if (fList) setFindings(fList);
+      if (wList) setWorkspaces(wList);
+      if (activeId) setActiveWorkspaceId(activeId);
     } catch (e) {
       console.warn("Veri yükleme uyarısı:", e);
     }
@@ -130,30 +189,95 @@ export function useDorkful() {
     }
   }, [target]);
 
-  // Go backend üzerinden dork üretme ve eşzamanlı hedef canlılık testi
-  const handleGenerate = useCallback(async (customTarget) => {
+  // Go backend üzerinden dork üretme veya CRT/Wayback keşif çalıştırma
+  const handleGenerate = useCallback(async (customTarget, engineOverride) => {
     const rawTarget = customTarget !== undefined ? customTarget : target;
     const formatted = formatTargetDomain(rawTarget);
+    const engine = engineOverride || selectedEngine;
+
+    if (engineOverride && engineOverride !== selectedEngine) {
+      setSelectedEngine(engineOverride);
+    }
 
     if (!formatted) {
       showToast("Hedef alan adı girilmedi.");
       return;
     }
 
-    // Arama kutusundaki hedefi de normalize edilmiş haliyle güncelle (ör: 'google' -> 'google.com')
+    // Arama kutusundaki hedefi normalize edilmiş haliyle güncelle
     setTarget(formatted);
+
+    // CRT.sh Alt Alan Adı Keşfi
+    if (engine === 'crtsh') {
+      setReconType('crtsh');
+      setReconTarget(formatted);
+      setIsReconModalOpen(true);
+      setIsReconLoading(true);
+      try {
+        const res = await FetchSubdomains(formatted);
+        setSubdomains(res || []);
+        showToast(`${res ? res.length : 0} alt alan adı tespit edildi.`);
+      } catch (e) {
+        showToast(`CRT.sh hatası: ${e}`);
+      } finally {
+        setIsReconLoading(false);
+      }
+      return;
+    }
+
+    // Wayback Machine Geçmiş URL Keşfi
+    if (engine === 'wayback') {
+      setReconType('wayback');
+      setReconTarget(formatted);
+      setIsReconModalOpen(true);
+      setIsReconLoading(true);
+      try {
+        const res = await FetchWaybackURLs(formatted);
+        setWaybackUrls(res || []);
+        showToast(`${res ? res.length : 0} tarihi URL tespit edildi.`);
+      } catch (e) {
+        showToast(`Wayback hatası: ${e}`);
+      } finally {
+        setIsReconLoading(false);
+      }
+      return;
+    }
 
     // Hedef canlılık denetimini paralel başlat
     runProbeTarget(formatted);
 
-    try {
-      const res = await GenerateDorks(formatted);
-      setDorks(res || []);
-      showToast(`${res.length} Sorgu Tespit Edildi.`);
-    } catch (e) {
-      showToast(`Hata: ${e}`);
+    // Google Standart Dorkları
+    if (engine === 'google') {
+      try {
+        const res = await GenerateDorks(formatted);
+        setDorks(res || []);
+        showToast(`${res ? res.length : 0} Google sorgusu tespit edildi.`);
+      } catch (e) {
+        showToast(`Hata: ${e}`);
+      }
+      return;
     }
-  }, [target, showToast, runProbeTarget]);
+
+    // GitHub, Shodan, Censys Dorkları
+    try {
+      const targetProfile = activeWorkspace || {
+        id: "temp",
+        name: formatted.split('.')[0] || "Target",
+        domain: formatted,
+        asn: "",
+        ipRange: "",
+        githubOrg: formatted.split('.')[0] || ""
+      };
+
+      const res = await GenerateMultiEngineDorks(engine, targetProfile);
+      setDorks(res || []);
+      const engineLabel = formatEngineName(engine);
+      showToast(`${res ? res.length : 0} ${engineLabel} sorgusu oluşturuldu.`);
+    } catch (e) {
+      const engineLabel = formatEngineName(engine);
+      showToast(`${engineLabel} sorgu hatası: ${e}`);
+    }
+  }, [target, selectedEngine, activeWorkspace, runProbeTarget, showToast]);
 
   // Çalışma zamanında yeni özel dork ekleme
   const handleAddCustomDork = useCallback(async ({ template, description, category }) => {
@@ -330,9 +454,13 @@ export function useDorkful() {
     }
   }, [dorks, showToast]);
 
-  // Varsayılan tarayıcıda arama sorgusunu açma
-  const executeSearch = useCallback((query) => {
-    BrowserOpenURL(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+  // Varsayılan tarayıcıda arama sorgusunu açma (varsa doğrudan searchUrl, yoksa google query)
+  const executeSearch = useCallback((query, searchUrl) => {
+    if (searchUrl) {
+      BrowserOpenURL(searchUrl);
+    } else {
+      BrowserOpenURL(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+    }
   }, []);
 
   // Panoya kopyalama
@@ -340,6 +468,80 @@ export function useDorkful() {
     ClipboardSetText(text);
     showToast("Kopyalandı.");
   }, [showToast]);
+
+  // Çalışma alanı seçimi
+  const handleSelectWorkspace = useCallback(async (wsId) => {
+    try {
+      await SetActiveWorkspaceID(wsId);
+      setActiveWorkspaceId(wsId);
+      const ws = workspaces.find(w => w.id === wsId);
+      if (ws && ws.domain) {
+        setTarget(ws.domain);
+        showToast(`'${ws.name}' çalışma alanına geçildi.`);
+      }
+    } catch (e) {
+      showToast(`Çalışma alanı seçim hatası: ${e}`);
+    }
+  }, [workspaces, showToast]);
+
+  // Yeni çalışma alanı oluşturma
+  const handleCreateWorkspace = useCallback(async (nameOrObj, domain, company, asn, ipRange, githubOrg) => {
+    try {
+      let n = nameOrObj, d = domain, c = company, a = asn, ip = ipRange, gh = githubOrg;
+      if (typeof nameOrObj === 'object' && nameOrObj !== null) {
+        n = nameOrObj.name;
+        d = nameOrObj.domain;
+        c = nameOrObj.company;
+        a = nameOrObj.asn;
+        ip = nameOrObj.ipRange;
+        gh = nameOrObj.githubOrg;
+      }
+      const created = await CreateWorkspace(n || "", d || "", c || "", a || "", ip || "", gh || "");
+      await reloadWorkspaces();
+      if (created && created.id) {
+        setActiveWorkspaceId(created.id);
+        if (created.domain) setTarget(created.domain);
+      }
+      showToast("Çalışma alanı oluşturuldu.");
+    } catch (e) {
+      showToast(`Oluşturma hatası: ${e}`);
+      throw e;
+    }
+  }, [reloadWorkspaces, showToast]);
+
+  // Çalışma alanı güncelleme
+  const handleUpdateWorkspace = useCallback(async (idOrObj, name, domain, company, asn, ipRange, githubOrg) => {
+    try {
+      let i = idOrObj, n = name, d = domain, c = company, a = asn, ip = ipRange, gh = githubOrg;
+      if (typeof idOrObj === 'object' && idOrObj !== null) {
+        i = idOrObj.id;
+        n = idOrObj.name;
+        d = idOrObj.domain;
+        c = idOrObj.company;
+        a = idOrObj.asn;
+        ip = idOrObj.ipRange;
+        gh = idOrObj.githubOrg;
+      }
+      await UpdateWorkspace(i || "", n || "", d || "", c || "", a || "", ip || "", gh || "");
+      await reloadWorkspaces();
+      showToast("Çalışma alanı güncellendi.");
+    } catch (e) {
+      showToast(`Güncelleme hatası: ${e}`);
+      throw e;
+    }
+  }, [reloadWorkspaces, showToast]);
+
+  // Çalışma alanı silme
+  const handleDeleteWorkspace = useCallback(async (id) => {
+    try {
+      await DeleteWorkspace(id);
+      await reloadWorkspaces();
+      showToast("Çalışma alanı silindi.");
+    } catch (e) {
+      showToast(`Silme hatası: ${e}`);
+      throw e;
+    }
+  }, [reloadWorkspaces, showToast]);
 
   // Seçilen kategoriye göre filtrelenmiş dorklar
   const filteredDorks = useMemo(() => {
@@ -393,5 +595,26 @@ export function useDorkful() {
     handleExport,
     executeSearch,
     copyToClipboard,
+    // Çoklu Motor & Keşif State/Aksiyonları
+    selectedEngine,
+    setSelectedEngine,
+    workspaces,
+    activeWorkspaceId,
+    activeWorkspace,
+    isWorkspaceModalOpen,
+    setIsWorkspaceModalOpen,
+    handleSelectWorkspace,
+    handleCreateWorkspace,
+    handleUpdateWorkspace,
+    handleDeleteWorkspace,
+    reloadWorkspaces,
+    // CRT.sh & Wayback Modal State/Aksiyonları
+    isReconModalOpen,
+    setIsReconModalOpen,
+    reconType,
+    reconTarget,
+    subdomains,
+    waybackUrls,
+    isReconLoading,
   };
 }

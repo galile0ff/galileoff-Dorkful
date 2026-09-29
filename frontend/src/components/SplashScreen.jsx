@@ -30,8 +30,8 @@ export default function SplashScreen({ isDismissed, onDismiss }) {
         style={{ animation: 'splashLineGrow 4s ease-in-out infinite 0.5s' }}
       />
 
-      <p className="splash-subtitle">Advanced Dork Intelligence</p>
-      <p className="splash-hint">click anywhere</p>
+      <p className="splash-subtitle">galileoff Dork Tool</p>
+      <p className="splash-hint">herhangi bir yere tıklayın</p>
     </div>
   );
 }

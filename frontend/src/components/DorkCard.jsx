@@ -53,6 +53,13 @@ export default function DorkCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="dork-category">{dork.category}</span>
 
+            {/* Arama Motoru Rozeti (Google, GitHub, Shodan, Censys) */}
+            {dork.engine && dork.engine !== 'google' && (
+              <span className="px-2 py-0.5 rounded text-[9px] font-mono font-medium border uppercase bg-white/[0.04] text-white/60 border-white/10 tracking-wider">
+                {dork.engine}
+              </span>
+            )}
+
             {/* MITRE ATT&CK Eşleşmesi Rozeti */}
             {dork.mitre && (
               <button
@@ -138,7 +145,7 @@ export default function DorkCard({
       <div className="dork-actions">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => onSearch(dork.query)}
+            onClick={() => onSearch(dork.query, dork.searchUrl)}
             className="dork-action-btn cursor-pointer"
           >
             <Search size={12} /> Tarayıcıda Aç

@@ -125,19 +125,19 @@ export default function FindingsLockerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl h-[86vh] bg-neutral-950 border border-white/15 rounded-2xl flex flex-col shadow-2xl text-white shadow-white/5 overflow-hidden"
+        className="relative w-full max-w-4xl h-[85vh] bg-[#0b0b0e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col shadow-2xl text-white shadow-black/90 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* =========================================================
             ÜST BAŞLIK & AKSİYONLAR
            ========================================================= */}
-        <div className="px-6 pt-5 pb-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-neutral-950">
+        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white">
+            <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white/80 shadow-inner">
               <Flag size={18} />
             </div>
             <div>

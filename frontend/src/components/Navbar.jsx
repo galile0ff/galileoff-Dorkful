@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, Download, Plus, SlidersHorizontal, Flag } from 'lucide-react';
+import { useRef } from 'react';
+import { Search, Download, Plus, SlidersHorizontal, Flag, Target, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Sabit üst navigasyon çubuğu (Sticky Navbar)
 export default function Navbar({
@@ -18,34 +19,70 @@ export default function Navbar({
   onOpenAddModal,
   onOpenManageModal,
   onOpenFindingsModal,
-  findingsCount = 0
+  findingsCount = 0,
+  onOpenWorkspaceModal
 }) {
+  const filterScrollRef = useRef(null);
+
+  const scrollFilters = (offset) => {
+    if (filterScrollRef.current) {
+      filterScrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
+
   return (
     <nav className={`navbar ${isVisible ? 'visible' : ''}`}>
       <div className="navbar-inner">
-        <h2
-          className="navbar-brand silver-glow cursor-pointer"
-          onClick={onLogoClick}
-          title="En üste kaydır"
-        >
-          Dorkful.
-        </h2>
+        {/* Sol Bölüm: Logo ve Kompakt Arama */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <h2
+            className="navbar-brand silver-glow cursor-pointer select-none"
+            onClick={onLogoClick}
+            title="En üste kaydır"
+          >
+            Dorkful.
+          </h2>
 
-        <div className="navbar-controls">
-          <input
-            type="text"
-            value={target}
-            onChange={(e) => onTargetChange(e.target.value)}
-            onBlur={onTargetBlur}
-            onKeyDown={(e) => e.key === 'Enter' && onGenerate()}
-            placeholder="Target..."
-            className="search-input-nav"
-          />
-          <button onClick={() => onGenerate()} className="btn-generate btn-generate-nav">
-            <Search size={12} />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <input
+              type="text"
+              value={target}
+              onChange={(e) => onTargetChange(e.target.value)}
+              onBlur={onTargetBlur}
+              onKeyDown={(e) => e.key === 'Enter' && onGenerate()}
+              placeholder="Hedef alan adı..."
+              className="search-input-nav"
+            />
+            <button
+              onClick={() => onGenerate()}
+              className="btn-generate btn-generate-nav"
+              title="Keşfet"
+            >
+              <Search size={12} />
+            </button>
+          </div>
+        </div>
+
+        {/* Orta Bölüm: Taşmayan, Esnek ve Kaydırılabilir Kategori Filtresi */}
+        <div className="relative flex-1 min-w-0 flex items-center px-1">
+          <button
+            type="button"
+            onClick={() => scrollFilters(-160)}
+            className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/15 text-white/50 hover:text-white transition-colors cursor-pointer mr-1 z-10"
+            title="Sola kaydır"
+          >
+            <ChevronLeft size={13} />
           </button>
 
-          <div className="filter-bar">
+          <div
+            ref={filterScrollRef}
+            className="filter-bar-nav"
+            onWheel={(e) => {
+              if (e.deltaY !== 0) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
+          >
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -58,6 +95,26 @@ export default function Navbar({
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => scrollFilters(160)}
+            className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/15 text-white/50 hover:text-white transition-colors cursor-pointer ml-1 z-10"
+            title="Sağa kaydır"
+          >
+            <ChevronRight size={13} />
+          </button>
+        </div>
+
+        {/* Sağ Bölüm: Sabit Hizalı Aksiyon Butonları */}
+        <div className="nav-actions">
+          <button
+            onClick={onOpenWorkspaceModal}
+            className="btn-icon"
+            title="Hedef Çalışma Alanları (Target Workspaces)"
+          >
+            <Target size={14} />
+          </button>
 
           <button
             onClick={onOpenAddModal}

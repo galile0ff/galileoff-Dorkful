@@ -14,6 +14,10 @@ export function ClearFindings() {
   return window['go']['main']['App']['ClearFindings']();
 }
 
+export function CreateWorkspace(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['main']['App']['CreateWorkspace'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
 export function DeleteCategory(arg1) {
   return window['go']['main']['App']['DeleteCategory'](arg1);
 }
@@ -26,6 +30,10 @@ export function DeleteTemplate(arg1) {
   return window['go']['main']['App']['DeleteTemplate'](arg1);
 }
 
+export function DeleteWorkspace(arg1) {
+  return window['go']['main']['App']['DeleteWorkspace'](arg1);
+}
+
 export function ExportFindingsJSON() {
   return window['go']['main']['App']['ExportFindingsJSON']();
 }
@@ -34,8 +42,24 @@ export function ExportJSON(arg1) {
   return window['go']['main']['App']['ExportJSON'](arg1);
 }
 
+export function FetchSubdomains(arg1) {
+  return window['go']['main']['App']['FetchSubdomains'](arg1);
+}
+
+export function FetchWaybackURLs(arg1) {
+  return window['go']['main']['App']['FetchWaybackURLs'](arg1);
+}
+
 export function GenerateDorks(arg1) {
   return window['go']['main']['App']['GenerateDorks'](arg1);
+}
+
+export function GenerateMultiEngineDorks(arg1, arg2) {
+  return window['go']['main']['App']['GenerateMultiEngineDorks'](arg1, arg2);
+}
+
+export function GetActiveWorkspaceID() {
+  return window['go']['main']['App']['GetActiveWorkspaceID']();
 }
 
 export function GetCategories() {
@@ -48,6 +72,14 @@ export function GetFindings() {
 
 export function GetTemplates() {
   return window['go']['main']['App']['GetTemplates']();
+}
+
+export function GetWorkspaces() {
+  return window['go']['main']['App']['GetWorkspaces']();
+}
+
+export function ProbeSubdomainsBatch(arg1) {
+  return window['go']['main']['App']['ProbeSubdomainsBatch'](arg1);
 }
 
 export function ProbeTarget(arg1) {
@@ -66,10 +98,18 @@ export function ResetToDefaults() {
   return window['go']['main']['App']['ResetToDefaults']();
 }
 
+export function SetActiveWorkspaceID(arg1) {
+  return window['go']['main']['App']['SetActiveWorkspaceID'](arg1);
+}
+
 export function UpdateFinding(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['UpdateFinding'](arg1, arg2, arg3, arg4);
 }
 
 export function UpdateTemplate(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['UpdateTemplate'](arg1, arg2, arg3, arg4);
+}
+
+export function UpdateWorkspace(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+  return window['go']['main']['App']['UpdateWorkspace'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }

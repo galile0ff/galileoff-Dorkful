@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+
 	"dorkapp/backend/models"
 	"dorkapp/backend/services"
 )
@@ -12,17 +14,23 @@ type App struct {
 	ctx           context.Context
 	dorkService   *services.DorkService
 	exportService *services.ExportService
-	probeService  *services.ProbeService
+	probeService   *services.ProbeService
 	findingService *services.FindingService
+	workspaceService *services.WorkspaceService
+	reconService     *services.ReconService
+	multiEngineService *services.MultiEngineService
 }
 
 // NewApp, servis bağımlılıklarıyla birlikte yeni bir App örneği oluşturur.
 func NewApp() *App {
 	return &App{
-		dorkService:   services.NewDorkService(),
-		exportService: services.NewExportService(),
-		probeService:  services.NewProbeService(),
-		findingService: services.NewFindingService(),
+		dorkService:        services.NewDorkService(),
+		exportService:      services.NewExportService(),
+		probeService:       services.NewProbeService(),
+		findingService:     services.NewFindingService(),
+		workspaceService:   services.NewWorkspaceService(),
+		reconService:       services.NewReconService(),
+		multiEngineService: services.NewMultiEngineService(),
 	}
 }
 
@@ -145,4 +153,58 @@ func (a *App) ClearFindings() error {
 func (a *App) ExportFindingsJSON() (string, error) {
 	return a.findingService.ExportFindingsJSON()
 }
+
+// GetWorkspaces, kayıtlı hedef çalışma alanlarını döner.
+func (a *App) GetWorkspaces() []models.Workspace {
+	return a.workspaceService.GetWorkspaces()
+}
+
+// CreateWorkspace, yeni bir hedef çalışma alanı oluşturur.
+func (a *App) CreateWorkspace(name, domain, company, asn, ipRange, githubOrg string) (models.Workspace, error) {
+	return a.workspaceService.CreateWorkspace(name, domain, company, asn, ipRange, githubOrg)
+}
+
+// UpdateWorkspace, mevcut bir çalışma alanını günceller.
+func (a *App) UpdateWorkspace(id, name, domain, company, asn, ipRange, githubOrg string) error {
+	return a.workspaceService.UpdateWorkspace(id, name, domain, company, asn, ipRange, githubOrg)
+}
+
+// DeleteWorkspace, belirtilen çalışma alanını siler.
+func (a *App) DeleteWorkspace(id string) error {
+	return a.workspaceService.DeleteWorkspace(id)
+}
+
+// GetActiveWorkspaceID, aktif çalışma alanı kimliğini döner.
+func (a *App) GetActiveWorkspaceID() string {
+	return a.workspaceService.GetActiveWorkspaceID()
+}
+
+// SetActiveWorkspaceID, aktif çalışma alanını belirler.
+func (a *App) SetActiveWorkspaceID(id string) error {
+	return a.workspaceService.SetActiveWorkspaceID(id)
+}
+
+// FetchSubdomains, CRT.sh üzerinden sertifika şeffaflığı kayıtlarından alt alan adlarını çıkarır.
+func (a *App) FetchSubdomains(domain string) ([]models.SubdomainResult, error) {
+	return a.reconService.FetchSubdomains(domain)
+}
+
+// FetchWaybackURLs, Archive.org üzerinden hedefin arşivlenmiş URL'lerini çeker.
+func (a *App) FetchWaybackURLs(domain string) ([]models.WaybackResult, error) {
+	return a.reconService.FetchWaybackURLs(domain)
+}
+
+// GenerateMultiEngineDorks, GitHub, Shodan, Censys vb. istihbarat motorları için dork üretir.
+func (a *App) GenerateMultiEngineDorks(engine string, workspace models.Workspace) []models.Dork {
+	return a.multiEngineService.GenerateMultiEngineDorks(engine, workspace)
+}
+
+// ProbeSubdomainsBatch, alt alan adlarının HTTP canlılık durumlarını eşzamanlı olarak tarar.
+// Ayrıca runtime.EventsEmit ile her bir alt alan adı test edildiğinde arayüze anında bildirim yollar.
+func (a *App) ProbeSubdomainsBatch(subdomains []string) map[string]models.ProbeResult {
+	return a.probeService.ProbeSubdomainsBatch(subdomains, func(res models.ProbeResult) {
+		runtime.EventsEmit(a.ctx, "subdomain-probe-update", res)
+	})
+}
+
 

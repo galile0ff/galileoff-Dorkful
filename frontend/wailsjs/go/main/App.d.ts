@@ -8,23 +8,39 @@ export function AddFinding(arg1:string,arg2:string,arg3:string,arg4:string,arg5:
 
 export function ClearFindings():Promise<void>;
 
+export function CreateWorkspace(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<models.Workspace>;
+
 export function DeleteCategory(arg1:string):Promise<void>;
 
 export function DeleteFinding(arg1:string):Promise<void>;
 
 export function DeleteTemplate(arg1:number):Promise<void>;
 
+export function DeleteWorkspace(arg1:string):Promise<void>;
+
 export function ExportFindingsJSON():Promise<string>;
 
 export function ExportJSON(arg1:Array<models.Dork>):Promise<string>;
 
+export function FetchSubdomains(arg1:string):Promise<Array<models.SubdomainResult>>;
+
+export function FetchWaybackURLs(arg1:string):Promise<Array<models.WaybackResult>>;
+
 export function GenerateDorks(arg1:string):Promise<Array<models.Dork>>;
+
+export function GenerateMultiEngineDorks(arg1:string,arg2:models.Workspace):Promise<Array<models.Dork>>;
+
+export function GetActiveWorkspaceID():Promise<string>;
 
 export function GetCategories():Promise<Array<string>>;
 
 export function GetFindings():Promise<Array<models.Finding>>;
 
 export function GetTemplates():Promise<Array<models.Template>>;
+
+export function GetWorkspaces():Promise<Array<models.Workspace>>;
+
+export function ProbeSubdomainsBatch(arg1:Array<string>):Promise<Record<string, models.ProbeResult>>;
 
 export function ProbeTarget(arg1:string):Promise<models.ProbeResult>;
 
@@ -34,6 +50,10 @@ export function RenameCategory(arg1:string,arg2:string):Promise<void>;
 
 export function ResetToDefaults():Promise<void>;
 
+export function SetActiveWorkspaceID(arg1:string):Promise<void>;
+
 export function UpdateFinding(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 
 export function UpdateTemplate(arg1:number,arg2:string,arg3:string,arg4:string):Promise<void>;
+
+export function UpdateWorkspace(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string):Promise<void>;

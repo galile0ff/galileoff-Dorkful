@@ -1,19 +1,20 @@
 // Dork kategorileri ve filtreleme listesi
 export const CATEGORIES = [
   "All",
-  "Files",
-  "Admin",
-  "Data",
-  "Dir",
-  "APIs",
-  "IoT"
+  "Files & Documents",
+  "Config & Secrets",
+  "Admin & Portals",
+  "Database & Backups",
+  "Open Directories & Git",
+  "APIs & Endpoints",
+  "Cloud & Buckets",
+  "Errors & Debug",
+  "Cameras & IoT"
 ];
 
-// Filtre eşleştirme mantığı
+// Filtre eşleştirme mantığı (Tam ve esnek kategori eşleştirmesi)
 export const matchCategory = (dorkCategory, selectedFilter) => {
-  if (selectedFilter === "All") return true;
-  if (selectedFilter === "Dir") return dorkCategory.includes("Dir");
-  if (selectedFilter === "Admin") return dorkCategory.includes("Admin");
-  if (selectedFilter === "Data") return dorkCategory.includes("Sensitive");
-  return dorkCategory === selectedFilter;
+  if (!selectedFilter || selectedFilter === "All") return true;
+  if (!dorkCategory) return false;
+  return dorkCategory.toLowerCase().trim() === selectedFilter.toLowerCase().trim();
 };

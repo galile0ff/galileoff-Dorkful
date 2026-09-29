@@ -12,6 +12,8 @@ import ManageDorksModal from '../components/ManageDorksModal';
 import TargetProbeCard from '../components/TargetProbeCard';
 import FlagFindingModal from '../components/FlagFindingModal';
 import FindingsLockerModal from '../components/FindingsLockerModal';
+import WorkspaceModal from '../components/WorkspaceModal';
+import ReconResultsModal from '../components/ReconResultsModal';
 
 export default function Home() {
   const {
@@ -61,6 +63,26 @@ export default function Home() {
     handleExport,
     executeSearch,
     copyToClipboard,
+    // Çoklu Motor & Keşif
+    selectedEngine,
+    setSelectedEngine,
+    workspaces,
+    activeWorkspaceId,
+    activeWorkspace,
+    isWorkspaceModalOpen,
+    setIsWorkspaceModalOpen,
+    handleSelectWorkspace,
+    handleCreateWorkspace,
+    handleUpdateWorkspace,
+    handleDeleteWorkspace,
+    // CRT.sh & Wayback Modal
+    isReconModalOpen,
+    setIsReconModalOpen,
+    reconType,
+    reconTarget,
+    subdomains,
+    waybackUrls,
+    isReconLoading,
   } = useDorkful();
 
   return (
@@ -117,6 +139,29 @@ export default function Home() {
         onShowToast={showToast}
       />
 
+      {/* Hedef Çalışma Alanları (Target Workspaces) Modalı */}
+      <WorkspaceModal
+        isOpen={isWorkspaceModalOpen}
+        onClose={() => setIsWorkspaceModalOpen(false)}
+        workspaces={workspaces}
+        activeWorkspaceId={activeWorkspaceId}
+        onSelectWorkspace={handleSelectWorkspace}
+        onCreateWorkspace={handleCreateWorkspace}
+        onUpdateWorkspace={handleUpdateWorkspace}
+        onDeleteWorkspace={handleDeleteWorkspace}
+      />
+
+      {/* Canlı Keşif Sonuçları (CRT.sh & Wayback Machine) Modalı */}
+      <ReconResultsModal
+        isOpen={isReconModalOpen}
+        onClose={() => setIsReconModalOpen(false)}
+        type={reconType}
+        target={reconTarget}
+        subdomains={subdomains}
+        waybackUrls={waybackUrls}
+        isLoading={isReconLoading}
+      />
+
       {/* Arka plan ışık efektleri */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div className="blob blob-1" />
@@ -143,13 +188,18 @@ export default function Home() {
         onOpenManageModal={() => setIsManageModalOpen(true)}
         onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
         findingsCount={findings.length}
+        onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
       />
 
       {/* Ana Kaydırma Alanı */}
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="h-full w-full overflow-y-auto custom-scrollbar relative z-10"
+        className={`h-full w-full relative z-10 transition-all ${
+          dorks.length > 0
+            ? 'overflow-y-auto custom-scrollbar'
+            : 'overflow-hidden flex flex-col justify-center items-center'
+        }`}
       >
         {/* Hero Karşılama ve Arama Bölümü */}
         <Hero
@@ -165,16 +215,23 @@ export default function Home() {
           onOpenManageModal={() => setIsManageModalOpen(true)}
           onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
           findingsCount={findings.length}
+          selectedEngine={selectedEngine}
+          onEngineChange={setSelectedEngine}
+          activeWorkspace={activeWorkspace}
+          onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
+          hasDorks={dorks.length > 0}
         />
 
         {/* Canlı Hedef HTTP Denetim Kartı (Durum Kodu, Yanıt Süresi, Sunucu Başlığı) */}
-        <div className="flex justify-center px-6 -mt-8 mb-8 relative z-20">
-          <TargetProbeCard
-            probeResult={probeResult}
-            isProbing={isProbing}
-            onReProbe={() => runProbeTarget()}
-          />
-        </div>
+        {probeResult && (
+          <div className={`flex justify-center px-6 relative z-20 w-full ${dorks.length > 0 ? '-mt-2 mb-6' : 'mt-1 mb-2'}`}>
+            <TargetProbeCard
+              probeResult={probeResult}
+              isProbing={isProbing}
+              onReProbe={() => runProbeTarget()}
+            />
+          </div>
+        )}
 
         {/* Dork Sonuç Listesi */}
         <DorkList
@@ -184,7 +241,6 @@ export default function Home() {
           findings={findings}
           onCopy={copyToClipboard}
           onSearch={executeSearch}
-          onExport={handleExport}
           onProbeURL={handleProbeURL}
           onFlag={openFlagModal}
         />

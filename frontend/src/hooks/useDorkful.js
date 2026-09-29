@@ -13,7 +13,13 @@ import {
   DeleteCategory,
   ResetToDefaults,
   ProbeTarget,
-  ProbeURL
+  ProbeURL,
+  GetFindings,
+  AddFinding,
+  UpdateFinding,
+  DeleteFinding,
+  ClearFindings,
+  ExportFindingsJSON
 } from '../../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 import { CATEGORIES, matchCategory } from '../constants/categories';
@@ -31,6 +37,10 @@ export function useDorkful() {
   const [splashDone, setSplashDone] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
+  const [flaggingDork, setFlaggingDork] = useState(null);
+  const [isFindingsModalOpen, setIsFindingsModalOpen] = useState(false);
+  const [findings, setFindings] = useState([]);
   const [probeResult, setProbeResult] = useState(null);
   const [isProbing, setIsProbing] = useState(false);
   const scrollRef = useRef(null);
@@ -41,17 +51,29 @@ export function useDorkful() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Backend'den kayıtlı tüm şablon ve kategorileri yükleme
+  // Backend'den kayıtlı tüm bulguları yenileme
+  const reloadFindings = useCallback(async () => {
+    try {
+      const fList = await GetFindings();
+      if (fList) setFindings(fList);
+    } catch (e) {
+      console.warn("Bulgu listesi yükleme uyarısı:", e);
+    }
+  }, []);
+
+  // Backend'den kayıtlı tüm şablon, kategori ve bulguları yükleme
   const reloadData = useCallback(async () => {
     try {
-      const [tList, cList] = await Promise.all([
+      const [tList, cList, fList] = await Promise.all([
         GetTemplates(),
-        GetCategories()
+        GetCategories(),
+        GetFindings()
       ]);
       if (tList) setTemplates(tList);
       if (cList && cList.length > 0) setCategories(cList);
+      if (fList) setFindings(fList);
     } catch (e) {
-      console.warn("Şablon yükleme uyarısı:", e);
+      console.warn("Veri yükleme uyarısı:", e);
     }
   }, []);
 
@@ -238,6 +260,65 @@ export function useDorkful() {
     }
   }, [target, reloadData, showToast]);
 
+  // Bulgu kaydetme (Yeni bulgu ekleme)
+  const handleSaveFinding = useCallback(async ({ target, dorkQuery, category, severity, evidenceUrl, notes }) => {
+    try {
+      await AddFinding(target, dorkQuery, category, severity, evidenceUrl, notes);
+      await reloadFindings();
+      showToast("Bulgu CTI defterine eklendi.");
+    } catch (e) {
+      showToast(`Bulgu kaydetme hatası: ${e}`);
+      throw e;
+    }
+  }, [reloadFindings, showToast]);
+
+  // Tekil bulgu silme
+  const handleDeleteFinding = useCallback(async (id) => {
+    try {
+      await DeleteFinding(id);
+      await reloadFindings();
+      showToast("Bulgu silindi.");
+    } catch (e) {
+      showToast(`Bulgu silme hatası: ${e}`);
+    }
+  }, [reloadFindings, showToast]);
+
+  // Tüm bulguları temizleme
+  const handleClearFindings = useCallback(async () => {
+    try {
+      await ClearFindings();
+      await reloadFindings();
+      showToast("Tüm bulgular temizlendi.");
+    } catch (e) {
+      showToast(`Temizleme hatası: ${e}`);
+    }
+  }, [reloadFindings, showToast]);
+
+  // Bulguları JSON CTI raporu olarak masaüstüne aktarma
+  const handleExportFindings = useCallback(async () => {
+    if (findings.length === 0) {
+      showToast("Dışa aktarılacak bulgu bulunmuyor.");
+      return;
+    }
+    try {
+      const path = await ExportFindingsJSON();
+      showToast(`CTI Raporu kaydedildi: ${path}`);
+    } catch (e) {
+      showToast(`Rapor dışa aktarma hatası: ${e}`);
+    }
+  }, [findings, showToast]);
+
+  // Bulgu işaretleme modalını açma / kapama
+  const openFlagModal = useCallback((dork) => {
+    setFlaggingDork(dork);
+    setIsFlagModalOpen(true);
+  }, []);
+
+  const closeFlagModal = useCallback(() => {
+    setIsFlagModalOpen(false);
+    setFlaggingDork(null);
+  }, []);
+
   // Go backend üzerinden JSON dışa aktarma
   const handleExport = useCallback(async () => {
     if (dorks.length === 0) return;
@@ -275,6 +356,7 @@ export function useDorkful() {
     templates,
     filteredDorks,
     toast,
+    showToast,
     navVisible,
     splashDone,
     setSplashDone,
@@ -282,6 +364,17 @@ export function useDorkful() {
     setIsAddModalOpen,
     isManageModalOpen,
     setIsManageModalOpen,
+    findings,
+    isFlagModalOpen,
+    flaggingDork,
+    isFindingsModalOpen,
+    setIsFindingsModalOpen,
+    openFlagModal,
+    closeFlagModal,
+    handleSaveFinding,
+    handleDeleteFinding,
+    handleClearFindings,
+    handleExportFindings,
     probeResult,
     isProbing,
     runProbeTarget,

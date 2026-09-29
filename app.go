@@ -13,6 +13,7 @@ type App struct {
 	dorkService   *services.DorkService
 	exportService *services.ExportService
 	probeService  *services.ProbeService
+	findingService *services.FindingService
 }
 
 // NewApp, servis bağımlılıklarıyla birlikte yeni bir App örneği oluşturur.
@@ -21,6 +22,7 @@ func NewApp() *App {
 		dorkService:   services.NewDorkService(),
 		exportService: services.NewExportService(),
 		probeService:  services.NewProbeService(),
+		findingService: services.NewFindingService(),
 	}
 }
 
@@ -96,3 +98,34 @@ func (a *App) ProbeTarget(target string) models.ProbeResult {
 func (a *App) ProbeURL(url string) models.ProbeResult {
 	return a.probeService.ProbeURL(url)
 }
+
+// GetFindings, kaydedilmiş tüm bulguları döner.
+func (a *App) GetFindings() []models.Finding {
+	return a.findingService.GetFindings()
+}
+
+// AddFinding, yeni bir güvenlik bulgusu veya kanıt kaydı ekler.
+func (a *App) AddFinding(target string, dorkQuery string, category string, severity string, evidenceURL string, notes string) (models.Finding, error) {
+	return a.findingService.AddFinding(target, dorkQuery, category, models.FindingSeverity(severity), evidenceURL, notes)
+}
+
+// UpdateFinding, mevcut bir bulgunun ayrıntılarını günceller.
+func (a *App) UpdateFinding(id string, severity string, evidenceURL string, notes string) error {
+	return a.findingService.UpdateFinding(id, models.FindingSeverity(severity), evidenceURL, notes)
+}
+
+// DeleteFinding, belirtilen kimlikteki bulguyu siler.
+func (a *App) DeleteFinding(id string) error {
+	return a.findingService.DeleteFinding(id)
+}
+
+// ClearFindings, tüm bulguları temizler.
+func (a *App) ClearFindings() error {
+	return a.findingService.ClearFindings()
+}
+
+// ExportFindingsJSON, bulguları masaüstüne JSON CTI raporu olarak dışa aktarır.
+func (a *App) ExportFindingsJSON() (string, error) {
+	return a.findingService.ExportFindingsJSON()
+}
+

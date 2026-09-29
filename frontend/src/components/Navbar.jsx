@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Download, Plus, SlidersHorizontal } from 'lucide-react';
+import { Search, Download, Plus, SlidersHorizontal, Flag } from 'lucide-react';
 
 // Sabit üst navigasyon çubuğu (Sticky Navbar)
 export default function Navbar({
@@ -16,7 +16,9 @@ export default function Navbar({
   onExport,
   onLogoClick,
   onOpenAddModal,
-  onOpenManageModal
+  onOpenManageModal,
+  onOpenFindingsModal,
+  findingsCount = 0
 }) {
   return (
     <nav className={`navbar ${isVisible ? 'visible' : ''}`}>
@@ -71,6 +73,19 @@ export default function Navbar({
             title="Dork ve Kategorileri Yönet"
           >
             <SlidersHorizontal size={14} />
+          </button>
+
+          <button
+            onClick={onOpenFindingsModal}
+            className="btn-icon relative"
+            title="Bulgu Defteri ve Kanıt Kasası"
+          >
+            <Flag size={14} className={findingsCount > 0 ? "text-red-400 fill-red-400/40" : ""} />
+            {findingsCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-[9px] font-mono font-bold text-white flex items-center justify-center shadow-sm">
+                {findingsCount}
+              </span>
+            )}
           </button>
 
           {hasDorks && (

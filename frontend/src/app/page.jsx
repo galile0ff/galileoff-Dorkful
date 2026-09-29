@@ -10,6 +10,8 @@ import Toast from '../components/Toast';
 import AddDorkModal from '../components/AddDorkModal';
 import ManageDorksModal from '../components/ManageDorksModal';
 import TargetProbeCard from '../components/TargetProbeCard';
+import FlagFindingModal from '../components/FlagFindingModal';
+import FindingsLockerModal from '../components/FindingsLockerModal';
 
 export default function Home() {
   const {
@@ -22,6 +24,7 @@ export default function Home() {
     templates,
     filteredDorks,
     toast,
+    showToast,
     navVisible,
     splashDone,
     setSplashDone,
@@ -29,6 +32,17 @@ export default function Home() {
     setIsAddModalOpen,
     isManageModalOpen,
     setIsManageModalOpen,
+    findings,
+    isFlagModalOpen,
+    flaggingDork,
+    isFindingsModalOpen,
+    setIsFindingsModalOpen,
+    openFlagModal,
+    closeFlagModal,
+    handleSaveFinding,
+    handleDeleteFinding,
+    handleClearFindings,
+    handleExportFindings,
     probeResult,
     isProbing,
     runProbeTarget,
@@ -83,6 +97,26 @@ export default function Home() {
         }}
       />
 
+      {/* Bulgu Olarak İşaretle (Flag as Finding) Modalı */}
+      <FlagFindingModal
+        isOpen={isFlagModalOpen}
+        onClose={closeFlagModal}
+        dork={flaggingDork}
+        target={target}
+        onSaveFinding={handleSaveFinding}
+      />
+
+      {/* Bulgu Defteri & Kanıt Kasası (Findings Locker) Modalı */}
+      <FindingsLockerModal
+        isOpen={isFindingsModalOpen}
+        onClose={() => setIsFindingsModalOpen(false)}
+        findings={findings}
+        onDeleteFinding={handleDeleteFinding}
+        onClearFindings={handleClearFindings}
+        onExportFindings={handleExportFindings}
+        onShowToast={showToast}
+      />
+
       {/* Arka plan ışık efektleri */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div className="blob blob-1" />
@@ -107,6 +141,8 @@ export default function Home() {
         onLogoClick={scrollToTop}
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenManageModal={() => setIsManageModalOpen(true)}
+        onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
+        findingsCount={findings.length}
       />
 
       {/* Ana Kaydırma Alanı */}
@@ -127,6 +163,8 @@ export default function Home() {
           onLogoClick={() => setSplashDone(false)}
           onOpenAddModal={() => setIsAddModalOpen(true)}
           onOpenManageModal={() => setIsManageModalOpen(true)}
+          onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
+          findingsCount={findings.length}
         />
 
         {/* Canlı Hedef HTTP Denetim Kartı (Durum Kodu, Yanıt Süresi, Sunucu Başlığı) */}
@@ -143,10 +181,12 @@ export default function Home() {
           totalDorksCount={dorks.length}
           filteredDorks={filteredDorks}
           target={target}
+          findings={findings}
           onCopy={copyToClipboard}
           onSearch={executeSearch}
           onExport={handleExport}
           onProbeURL={handleProbeURL}
+          onFlag={openFlagModal}
         />
       </div>
     </div>

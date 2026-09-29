@@ -6,12 +6,28 @@ export function AddCustomDork(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddCustomDork'](arg1, arg2, arg3);
 }
 
+export function AddFinding(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['main']['App']['AddFinding'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
+export function ClearFindings() {
+  return window['go']['main']['App']['ClearFindings']();
+}
+
 export function DeleteCategory(arg1) {
   return window['go']['main']['App']['DeleteCategory'](arg1);
 }
 
+export function DeleteFinding(arg1) {
+  return window['go']['main']['App']['DeleteFinding'](arg1);
+}
+
 export function DeleteTemplate(arg1) {
   return window['go']['main']['App']['DeleteTemplate'](arg1);
+}
+
+export function ExportFindingsJSON() {
+  return window['go']['main']['App']['ExportFindingsJSON']();
 }
 
 export function ExportJSON(arg1) {
@@ -24,6 +40,10 @@ export function GenerateDorks(arg1) {
 
 export function GetCategories() {
   return window['go']['main']['App']['GetCategories']();
+}
+
+export function GetFindings() {
+  return window['go']['main']['App']['GetFindings']();
 }
 
 export function GetTemplates() {
@@ -44,6 +64,10 @@ export function RenameCategory(arg1, arg2) {
 
 export function ResetToDefaults() {
   return window['go']['main']['App']['ResetToDefaults']();
+}
+
+export function UpdateFinding(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['UpdateFinding'](arg1, arg2, arg3, arg4);
 }
 
 export function UpdateTemplate(arg1, arg2, arg3, arg4) {

@@ -198,6 +198,16 @@
   .dork-actions    { @apply flex items-center justify-between pt-2 border-t border-white/5; }
   .dork-action-btn { @apply flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/30 hover:text-white transition-all; }
 
+  /* Modal Sistem Stilleri */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6
+           bg-black/80 backdrop-blur-md;
+  }
+  .modal-container {
+    @apply relative w-full bg-neutral-950 border border-white/15 rounded-2xl
+           flex flex-col shadow-2xl text-white shadow-white/5 overflow-hidden;
+  }
+
   /* Toast */
   .toast {
     @apply fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3

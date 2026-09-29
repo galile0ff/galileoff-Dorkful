@@ -17,15 +17,35 @@ func NewExportService() *ExportService {
 	return &ExportService{}
 }
 
-// ExportJSON, verilen dork listesini kullanıcının Masaüstüne 'dorks.json' olarak kaydeder.
-func (s *ExportService) ExportJSON(dorks []models.Dork) (string, error) {
+// GetDesktopDir, işletim sistemi diline (Türkçe/İngilizce) ve OneDrive durumuna göre Masaüstü dizinini güvenli şekilde tespit eder.
+func GetDesktopDir() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("kullanıcı ana dizini alınamadı: %w", err)
+		return "."
 	}
 
+	candidates := []string{
+		filepath.Join(homeDir, "Desktop"),
+		filepath.Join(homeDir, "Masaüstü"),
+		filepath.Join(homeDir, "OneDrive", "Desktop"),
+		filepath.Join(homeDir, "OneDrive", "Masaüstü"),
+	}
+
+	for _, path := range candidates {
+		if info, err := os.Stat(path); err == nil && info.IsDir() {
+			return path
+		}
+	}
+
+	return homeDir
+}
+
+// ExportJSON, verilen dork listesini kullanıcının Masaüstüne 'dorks.json' olarak kaydeder.
+func (s *ExportService) ExportJSON(dorks []models.Dork) (string, error) {
+	desktopDir := GetDesktopDir()
+
 	// Varsayılan hedef: Masaüstü / dorks.json
-	filePath := filepath.Join(homeDir, "Desktop", "dorks.json")
+	filePath := filepath.Join(desktopDir, "dorks.json")
 
 	fileBytes, err := json.MarshalIndent(dorks, "", "  ")
 	if err != nil {

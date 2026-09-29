@@ -4,15 +4,25 @@ import {models} from '../models';
 
 export function AddCustomDork(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function AddFinding(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<models.Finding>;
+
+export function ClearFindings():Promise<void>;
+
 export function DeleteCategory(arg1:string):Promise<void>;
 
+export function DeleteFinding(arg1:string):Promise<void>;
+
 export function DeleteTemplate(arg1:number):Promise<void>;
+
+export function ExportFindingsJSON():Promise<string>;
 
 export function ExportJSON(arg1:Array<models.Dork>):Promise<string>;
 
 export function GenerateDorks(arg1:string):Promise<Array<models.Dork>>;
 
 export function GetCategories():Promise<Array<string>>;
+
+export function GetFindings():Promise<Array<models.Finding>>;
 
 export function GetTemplates():Promise<Array<models.Template>>;
 
@@ -23,5 +33,7 @@ export function ProbeURL(arg1:string):Promise<models.ProbeResult>;
 export function RenameCategory(arg1:string,arg2:string):Promise<void>;
 
 export function ResetToDefaults():Promise<void>;
+
+export function UpdateFinding(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 
 export function UpdateTemplate(arg1:number,arg2:string,arg3:string,arg4:string):Promise<void>;

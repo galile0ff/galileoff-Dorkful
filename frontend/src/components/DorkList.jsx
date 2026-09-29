@@ -8,10 +8,12 @@ export default function DorkList({
   totalDorksCount,
   filteredDorks,
   target,
+  findings = [],
   onCopy,
   onSearch,
   onExport,
-  onProbeURL
+  onProbeURL,
+  onFlag
 }) {
   return (
     <div className="max-w-3xl mx-auto px-6 pb-32 flex flex-col gap-5 items-center">
@@ -25,17 +27,22 @@ export default function DorkList({
           Bu filtrede eşleşme yok.
         </p>
       ) : (
-        filteredDorks.map((dork, i) => (
-          <DorkCard
-            key={`${dork.query}-${i}`}
-            dork={dork}
-            index={i}
-            target={target}
-            onCopy={onCopy}
-            onSearch={onSearch}
-            onProbeURL={onProbeURL}
-          />
-        ))
+        filteredDorks.map((dork, i) => {
+          const isFlagged = findings.some((f) => f.dorkQuery === dork.query);
+          return (
+            <DorkCard
+              key={`${dork.query}-${i}`}
+              dork={dork}
+              index={i}
+              target={target}
+              isFlagged={isFlagged}
+              onCopy={onCopy}
+              onSearch={onSearch}
+              onProbeURL={onProbeURL}
+              onFlag={onFlag}
+            />
+          );
+        })
       )}
 
       {totalDorksCount > 0 && (

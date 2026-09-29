@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Plus, SlidersHorizontal } from 'lucide-react';
+import { Search, Plus, SlidersHorizontal, Flag } from 'lucide-react';
 
 // Ana karşılama ve arama bölümü (Hero)
 export default function Hero({
@@ -13,7 +13,9 @@ export default function Hero({
   onFilterChange,
   onLogoClick,
   onOpenAddModal,
-  onOpenManageModal
+  onOpenManageModal,
+  onOpenFindingsModal,
+  findingsCount = 0
 }) {
   return (
     <section className="hero-section">
@@ -77,6 +79,25 @@ export default function Hero({
           >
             <SlidersHorizontal size={12} className="text-white/50" />
             <span>Yönet</span>
+          </button>
+
+          {/* Bulgu Defteri & Kanıt Kasası Butonu */}
+          <button
+            onClick={onOpenFindingsModal}
+            className={`filter-btn filter-btn-hero border flex items-center gap-1.5 transition-all ${
+              findingsCount > 0
+                ? 'border-red-500/30 text-white/85 bg-red-500/10 hover:bg-red-500/20 hover:border-red-500/50'
+                : 'border-white/10 text-white/50 hover:text-white hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.06]'
+            }`}
+            title="Bulgu Defteri ve Kanıt Kasasını Görüntüle"
+          >
+            <Flag size={12} className={findingsCount > 0 ? "text-red-400 fill-red-400/40" : "text-white/50"} />
+            <span>Bulgular</span>
+            {findingsCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-red-500/30 text-red-300 border border-red-500/40">
+                {findingsCount}
+              </span>
+            )}
           </button>
         </div>
       </div>

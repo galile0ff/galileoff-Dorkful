@@ -261,9 +261,9 @@ export function useDorkful() {
   }, [target, reloadData, showToast]);
 
   // Bulgu kaydetme (Yeni bulgu ekleme)
-  const handleSaveFinding = useCallback(async ({ target, dorkQuery, category, severity, evidenceUrl, notes }) => {
+  const handleSaveFinding = useCallback(async ({ target, dorkQuery, category, severity, evidenceUrl, notes, mitreTechniqueId }) => {
     try {
-      await AddFinding(target, dorkQuery, category, severity, evidenceUrl, notes);
+      await AddFinding(target, dorkQuery, category, severity, evidenceUrl, notes, mitreTechniqueId || "");
       await reloadFindings();
       showToast("Bulgu CTI defterine eklendi.");
     } catch (e) {

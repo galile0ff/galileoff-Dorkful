@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Search, Copy, Zap, Activity, ShieldCheck, ShieldAlert, RefreshCw, Flag } from 'lucide-react';
+import { Search, Copy, Zap, Activity, ShieldCheck, ShieldAlert, RefreshCw, Flag, Shield } from 'lucide-react';
+import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 
 // Tekil dork kartı bileşeni
 export default function DorkCard({
@@ -49,8 +50,24 @@ export default function DorkCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="dork-category">{dork.category}</span>
+
+            {/* MITRE ATT&CK Eşleşmesi Rozeti */}
+            {dork.mitre && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  BrowserOpenURL(dork.mitre.url);
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/25 transition-all flex items-center gap-1 cursor-pointer"
+                title={`MITRE ATT&CK: ${dork.mitre.technique} (${dork.mitre.tactic}) - Resmi sayfayı aç`}
+              >
+                <Shield size={10} className="text-red-400" />
+                <span>{dork.mitre.techniqueId}</span>
+              </button>
+            )}
 
             {/* Bulgu Rozeti */}
             {isFlagged && (

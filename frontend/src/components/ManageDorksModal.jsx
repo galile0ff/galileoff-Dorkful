@@ -292,6 +292,11 @@ export default function ManageDorksModal({
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider bg-white/10 text-white/70 border border-white/10">
                             {t.category}
                           </span>
+                          {t.mitre && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                              {t.mitre.techniqueId}
+                            </span>
+                          )}
                           <p className="text-xs text-white/80 font-medium truncate">
                             {t.description}
                           </p>

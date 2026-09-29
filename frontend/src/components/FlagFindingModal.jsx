@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, ShieldAlert, Flag, Link as LinkIcon, FileText, CheckCircle2 } from 'lucide-react';
+import { X, ShieldAlert, Flag, Link as LinkIcon, FileText, CheckCircle2, Shield } from 'lucide-react';
 
 // Risk seviyeleri tanımları
 const SEVERITIES = [
@@ -21,6 +21,7 @@ export default function FlagFindingModal({
   const [severity, setSeverity] = useState('High');
   const [evidenceUrl, setEvidenceUrl] = useState('');
   const [notes, setNotes] = useState('');
+  const [mitreTechniqueId, setMitreTechniqueId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Modal açıldığında varsayılan değerleri hazırla
@@ -28,6 +29,7 @@ export default function FlagFindingModal({
     if (isOpen && dork) {
       setSeverity('High');
       setNotes('');
+      setMitreTechniqueId(dork.mitre ? dork.mitre.techniqueId : 'T1593.002');
 
       // Dork içindeki inurl: değerini tespit edip olası kanıt linki öner
       let suggestedURL = target || '';
@@ -60,6 +62,7 @@ export default function FlagFindingModal({
         severity,
         evidenceUrl: evidenceUrl.trim(),
         notes: notes.trim(),
+        mitreTechniqueId: mitreTechniqueId || (dork.mitre ? dork.mitre.techniqueId : "T1593.002"),
       });
       onClose();
     } catch (err) {
@@ -103,7 +106,14 @@ export default function FlagFindingModal({
         <div className="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-white/40">
             <span className="font-mono">Hedef: <strong className="text-white/80">{target}</strong></span>
-            <span className="px-2 py-0.5 rounded bg-white/5 text-[11px] font-mono text-white/60">{dork.category}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="px-2 py-0.5 rounded bg-white/5 text-[11px] font-mono text-white/60">{dork.category}</span>
+              {dork.mitre && (
+                <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 text-[10px] font-mono border border-red-500/20">
+                  {dork.mitre.techniqueId}
+                </span>
+              )}
+            </div>
           </div>
           <p className="text-xs font-mono text-white/70 truncate bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
             {dork.query}
@@ -111,6 +121,29 @@ export default function FlagFindingModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          {/* MITRE ATT&CK Çerçeve Eşlemesi */}
+          <div>
+            <label className="block text-xs font-medium text-white/70 mb-1.5 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Shield size={12} className="text-red-400" />
+                <span>MITRE ATT&CK Tekniği</span>
+              </div>
+              <span className="text-[10px] font-mono text-white/40">Taktik Sınıflandırma</span>
+            </label>
+            <select
+              value={mitreTechniqueId}
+              onChange={(e) => setMitreTechniqueId(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 font-mono"
+            >
+              <option value="T1593.002" className="bg-neutral-900 text-white">T1593.002 - Search Engines (Reconnaissance)</option>
+              <option value="T1552.001" className="bg-neutral-900 text-white">T1552.001 - Credentials In Files (Credential Access)</option>
+              <option value="T1190" className="bg-neutral-900 text-white">T1190 - Exploit Public-Facing App (Initial Access)</option>
+              <option value="T1594" className="bg-neutral-900 text-white">T1594 - Search Victim-Owned Websites (Reconnaissance)</option>
+              <option value="T1596" className="bg-neutral-900 text-white">T1596 - Search Open Technical Databases (Reconnaissance)</option>
+              <option value="T1592.002" className="bg-neutral-900 text-white">T1592.002 - Host Information: Software (Reconnaissance)</option>
+            </select>
+          </div>
+
           {/* Risk Seviyesi Seçimi */}
           <div>
             <label className="block text-xs font-medium text-white/70 mb-2">

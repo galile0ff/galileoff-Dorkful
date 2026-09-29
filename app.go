@@ -105,8 +105,25 @@ func (a *App) GetFindings() []models.Finding {
 }
 
 // AddFinding, yeni bir güvenlik bulgusu veya kanıt kaydı ekler.
-func (a *App) AddFinding(target string, dorkQuery string, category string, severity string, evidenceURL string, notes string) (models.Finding, error) {
-	return a.findingService.AddFinding(target, dorkQuery, category, models.FindingSeverity(severity), evidenceURL, notes)
+func (a *App) AddFinding(target string, dorkQuery string, category string, severity string, evidenceURL string, notes string, mitreTechniqueID string) (models.Finding, error) {
+	var mitre *models.MitreAttack
+	switch mitreTechniqueID {
+	case "T1552.001":
+		mitre = services.MitreCredentialsInFiles
+	case "T1190":
+		mitre = services.MitreExploitPublicFacing
+	case "T1594":
+		mitre = services.MitreSearchVictimWebsites
+	case "T1596":
+		mitre = services.MitreTechnicalDatabases
+	case "T1592.002":
+		mitre = services.MitreGatherHostSoftware
+	case "T1593.002":
+		mitre = services.MitreSearchEngines
+	default:
+		mitre = services.ResolveMitreAttack(category, dorkQuery)
+	}
+	return a.findingService.AddFinding(target, dorkQuery, category, models.FindingSeverity(severity), evidenceURL, notes, mitre)
 }
 
 // UpdateFinding, mevcut bir bulgunun ayrıntılarını günceller.

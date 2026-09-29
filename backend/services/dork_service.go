@@ -71,10 +71,15 @@ func (s *DorkService) GenerateDorks(target string) []models.Dork {
 	dorks := make([]models.Dork, 0, len(s.templates))
 	for _, t := range s.templates {
 		query := strings.ReplaceAll(t.Template, "{target}", cleanTarget)
+		mitre := t.Mitre
+		if mitre == nil {
+			mitre = ResolveMitreAttack(t.Category, t.Template)
+		}
 		dorks = append(dorks, models.Dork{
 			Query:       query,
 			Description: t.Description,
 			Category:    t.Category,
+			Mitre:       mitre,
 		})
 	}
 	return dorks
@@ -96,10 +101,16 @@ func (s *DorkService) AddTemplate(t models.Template) error {
 		trimmedCat = "Custom"
 	}
 
+	mitre := t.Mitre
+	if mitre == nil {
+		mitre = ResolveMitreAttack(trimmedCat, trimmedQuery)
+	}
+
 	newTemplate := models.Template{
 		Template:    trimmedQuery,
 		Description: trimmedDesc,
 		Category:    trimmedCat,
+		Mitre:       mitre,
 	}
 
 	s.mu.Lock()
@@ -125,6 +136,11 @@ func (s *DorkService) UpdateTemplate(index int, t models.Template) error {
 		trimmedCat = "Custom"
 	}
 
+	mitre := t.Mitre
+	if mitre == nil {
+		mitre = ResolveMitreAttack(trimmedCat, trimmedQuery)
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -136,6 +152,7 @@ func (s *DorkService) UpdateTemplate(index int, t models.Template) error {
 		Template:    trimmedQuery,
 		Description: trimmedDesc,
 		Category:    trimmedCat,
+		Mitre:       mitre,
 	}
 
 	return s.saveTemplates()

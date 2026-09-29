@@ -21,5 +21,6 @@ type Finding struct {
 	Severity    FindingSeverity `json:"severity"`
 	EvidenceURL string          `json:"evidenceUrl"`
 	Notes       string          `json:"notes"`
+	Mitre       *MitreAttack    `json:"mitre,omitempty"`
 	CreatedAt   time.Time       `json:"createdAt"`
 }

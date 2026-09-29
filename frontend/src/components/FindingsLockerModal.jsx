@@ -14,7 +14,8 @@ import {
   Link as LinkIcon,
   ShieldAlert,
   Layers,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import { BrowserOpenURL, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 
@@ -349,6 +350,22 @@ export default function FindingsLockerModal({
                     <span className="text-[10px] font-mono uppercase tracking-widest text-white/50 px-2 py-0.5 rounded bg-white/[0.04]">
                       {f.category}
                     </span>
+
+                    {/* MITRE ATT&CK Eşleşmesi Rozeti */}
+                    {f.mitre && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openURL(f.mitre.url);
+                        }}
+                        className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/25 transition-all flex items-center gap-1 cursor-pointer"
+                        title={`MITRE ATT&CK: ${f.mitre.technique} (${f.mitre.tactic}) - Resmi sayfayı aç`}
+                      >
+                        <Shield size={10} className="text-red-400" />
+                        <span>{f.mitre.techniqueId}</span>
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">

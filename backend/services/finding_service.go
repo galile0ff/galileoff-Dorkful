@@ -43,7 +43,7 @@ func (s *FindingService) GetFindings() []models.Finding {
 }
 
 // AddFinding, yeni bir kanıt/bulgu kaydı oluşturur ve diske kaydeder.
-func (s *FindingService) AddFinding(target, dorkQuery, category string, severity models.FindingSeverity, evidenceURL, notes string) (models.Finding, error) {
+func (s *FindingService) AddFinding(target, dorkQuery, category string, severity models.FindingSeverity, evidenceURL, notes string, mitre *models.MitreAttack) (models.Finding, error) {
 	cleanTarget := strings.TrimSpace(target)
 	cleanQuery := strings.TrimSpace(dorkQuery)
 
@@ -56,6 +56,10 @@ func (s *FindingService) AddFinding(target, dorkQuery, category string, severity
 		severity = models.SeverityMedium
 	}
 
+	if mitre == nil {
+		mitre = ResolveMitreAttack(category, dorkQuery)
+	}
+
 	finding := models.Finding{
 		ID:          fmt.Sprintf("fnd_%d", time.Now().UnixNano()),
 		Target:      cleanTarget,
@@ -64,6 +68,7 @@ func (s *FindingService) AddFinding(target, dorkQuery, category string, severity
 		Severity:    severity,
 		EvidenceURL: strings.TrimSpace(evidenceURL),
 		Notes:       strings.TrimSpace(notes),
+		Mitre:       mitre,
 		CreatedAt:   time.Now(),
 	}
 
@@ -138,11 +143,20 @@ func (s *FindingService) ExportFindingsJSON() (string, error) {
 	filename := fmt.Sprintf("dorkful_cti_findings_%s.json", time.Now().Format("2006-01-02_15-04-05"))
 	fullPath := filepath.Join(desktopDir, filename)
 
+	mitreMatrix := make(map[string]int)
+	for _, f := range findingsCopy {
+		if f.Mitre != nil && f.Mitre.TechniqueID != "" {
+			key := fmt.Sprintf("%s (%s)", f.Mitre.TechniqueID, f.Mitre.Technique)
+			mitreMatrix[key]++
+		}
+	}
+
 	reportData := map[string]interface{}{
-		"tool":        "Dorkful - galileoff CTI Tool",
-		"generatedAt": time.Now().Format(time.RFC3339),
-		"totalCount":  len(findingsCopy),
-		"findings":    findingsCopy,
+		"tool":         "Dorkful - galileoff CTI Tool",
+		"generatedAt":  time.Now().Format(time.RFC3339),
+		"totalCount":   len(findingsCopy),
+		"mitreSummary": mitreMatrix,
+		"findings":     findingsCopy,
 	}
 
 	fileBytes, err := json.MarshalIndent(reportData, "", "  ")

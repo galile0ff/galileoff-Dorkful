@@ -19,6 +19,7 @@ import GitHubLeaksModal from '../components/GitHubLeaksModal';
 import ShodanResultsModal from '../components/ShodanResultsModal';
 import CensysResultsModal from '../components/CensysResultsModal';
 import JSAnalysisModal from '../components/JSAnalysisModal';
+import DNSNetworkMapModal from '../components/DNSNetworkMapModal';
 
 export default function Home() {
   const {
@@ -118,6 +119,15 @@ export default function Home() {
     setIsJSAnalysisModalOpen,
     isJSAnalysisLoading,
     handleScanJavaScript,
+    // Akıllı Teknoloji Parmak İzi (Tech Fingerprinting)
+    selectedTechFilter,
+    setSelectedTechFilter,
+    // DNS & Reverse IP Ağ Haritası
+    dnsMapResult,
+    isDNSMapModalOpen,
+    setIsDNSMapModalOpen,
+    isDNSMapLoading,
+    handleScanDNSMap,
   } = useDorkful();
 
   return (
@@ -285,6 +295,31 @@ export default function Home() {
         }}
       />
 
+      {/* DNS & Reverse IP Ağ Haritası Modalı */}
+      <DNSNetworkMapModal
+        isOpen={isDNSMapModalOpen}
+        onClose={() => setIsDNSMapModalOpen(false)}
+        target={target}
+        result={dnsMapResult}
+        isLoading={isDNSMapLoading}
+        onRefresh={() => handleScanDNSMap(target)}
+        onSelectNewTarget={(newTarget) => {
+          setTarget(newTarget);
+          handleScanDNSMap(newTarget);
+        }}
+        onFlagAsFinding={(finding) => {
+          openFlagModal({
+            query: finding.query || target,
+            description: finding.description || "DNS & Reverse IP Altyapı Tespiti",
+            category: finding.category || "Network & Infrastructure",
+            evidenceUrl: finding.evidenceUrl || target,
+            evidenceURL: finding.evidenceUrl || target,
+            severity: finding.severity || "Medium",
+            notes: finding.notes || ""
+          });
+        }}
+      />
+
       {/* Bulgu Olarak İşaretle (Flag as Finding) Modalı - Diğer tüm keşif modallarının en üstünde açılır */}
       <FlagFindingModal
         isOpen={isFlagModalOpen}
@@ -354,16 +389,19 @@ export default function Home() {
           onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           onOpenJSAnalysis={() => handleScanJavaScript(target)}
+          onOpenDNSMap={() => handleScanDNSMap(target)}
           hasDorks={dorks.length > 0}
         />
 
-        {/* Canlı Hedef HTTP Denetim Kartı (Durum Kodu, Yanıt Süresi, Sunucu Başlığı) */}
+        {/* Canlı Hedef HTTP Denetim Kartı (Durum Kodu, Yanıt Süresi, Sunucu Başlığı, Teknoloji Parmak İzleri) */}
         {probeResult && (
           <div className={`flex justify-center px-6 relative z-20 w-full ${dorks.length > 0 ? '-mt-2 mb-6' : 'mt-1 mb-2'}`}>
             <TargetProbeCard
               probeResult={probeResult}
               isProbing={isProbing}
               onReProbe={() => runProbeTarget()}
+              selectedTechFilter={selectedTechFilter}
+              onSelectTech={setSelectedTechFilter}
             />
           </div>
         )}
@@ -491,6 +529,31 @@ export default function Home() {
                 className="px-3.5 py-1.5 rounded-xl bg-amber-400 text-black font-semibold text-xs hover:bg-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-amber-400/20 active:scale-95 disabled:opacity-50"
               >
                 <span>{isJSAnalysisLoading ? 'Taranıyor...' : 'Analiz Raporunu Aç'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* DNS & Reverse IP Ağ Haritası Bilgi ve İnceleme Çubuğu */}
+        {selectedEngine === 'dnsmap' && (
+          <div className="w-full max-w-3xl mx-auto px-6 mb-4 relative z-20">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-lg shadow-black/40">
+              <div className="flex items-center gap-2.5 text-xs">
+                <div className={`w-2 h-2 rounded-full ${dnsMapResult ? 'bg-cyan-400 animate-pulse' : 'bg-white/40'}`} />
+                <span className="text-white/80">
+                  {dnsMapResult ? (
+                    <>Ağ Topolojisi Çıkarıldı: <strong className="text-white font-mono">{(dnsMapResult.records || []).length} DNS kaydı</strong>, <strong className="text-cyan-400 font-mono">{(dnsMapResult.coHostedDomains || []).length} komşu alan adı</strong>, <strong className="text-amber-400 font-mono">{(dnsMapResult.nodes || []).length} düğüm</strong>.</>
+                  ) : (
+                    <>Hedef alan adının DNS topolojisini ve aynı sunucudaki (Reverse IP) komşu siteleri haritalayın.</>
+                  )}
+                </span>
+              </div>
+              <button
+                onClick={() => handleScanDNSMap(target)}
+                disabled={isDNSMapLoading}
+                className="px-3.5 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-white/20 active:scale-95 disabled:opacity-50"
+              >
+                <span>{isDNSMapLoading ? 'Topoloji Çıkarılıyor...' : 'Ağ Haritasını Aç'}</span>
               </button>
             </div>
           </div>

@@ -46,6 +46,10 @@ export function ExportJSON(arg1) {
   return window['go']['main']['App']['ExportJSON'](arg1);
 }
 
+export function FetchDNSAndReverseIP(arg1) {
+  return window['go']['main']['App']['FetchDNSAndReverseIP'](arg1);
+}
+
 export function FetchSubdomains(arg1) {
   return window['go']['main']['App']['FetchSubdomains'](arg1);
 }

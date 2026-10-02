@@ -7,6 +7,7 @@ type Dork struct {
 	Category    string       `json:"category"`
 	Engine      string       `json:"engine,omitempty"`    // "google" | "github" | "shodan" | "censys"
 	SearchURL   string       `json:"searchUrl,omitempty"` // Tarayıcıda açılacak hazır URL
+	TechTag     string       `json:"techTag,omitempty"`   // İlgili teknoloji etiketi (örn: WordPress, Laravel, Next.js, PHP, Nginx)
 	Mitre       *MitreAttack `json:"mitre,omitempty"`
 }
 

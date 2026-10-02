@@ -36,7 +36,8 @@ import {
   SearchGitHubLeaks,
   SearchShodanHost,
   SearchCensysHosts,
-  AnalyzeTargetJavaScript
+  AnalyzeTargetJavaScript,
+  FetchDNSAndReverseIP
 } from '../../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 import { CATEGORIES, matchCategory } from '../constants/categories';
@@ -49,6 +50,7 @@ const ENGINE_LABELS = {
   shodan: 'Shodan',
   censys: 'Censys',
   jsminer: 'JS Miner',
+  dnsmap: 'DNS Haritası',
   crtsh: 'CRT.sh',
   wayback: 'Wayback'
 };
@@ -113,6 +115,14 @@ export function useDorkful() {
   const [censysHosts, setCensysHosts] = useState([]);
   const [isCensysModalOpen, setIsCensysModalOpen] = useState(false);
   const [isCensysLoading, setIsCensysLoading] = useState(false);
+
+  // Akıllı Teknoloji Tespiti (Tech Fingerprinting) Filtresi
+  const [selectedTechFilter, setSelectedTechFilter] = useState(null);
+
+  // DNS & Reverse IP Ağ Haritası State'leri
+  const [dnsMapResult, setDnsMapResult] = useState(null);
+  const [isDNSMapModalOpen, setIsDNSMapModalOpen] = useState(false);
+  const [isDNSMapLoading, setIsDNSMapLoading] = useState(false);
 
   // Aktif çalışma alanı nesnesi
   const activeWorkspace = useMemo(() => {
@@ -281,6 +291,28 @@ export function useDorkful() {
     }
   }, [target, showToast]);
 
+  // DNS ve Reverse IP Ağ Haritası (Co-hosted Domains) analizi
+  const handleScanDNSMap = useCallback(async (customTarget) => {
+    const rawTarget = customTarget || target;
+    if (!rawTarget || !rawTarget.trim()) {
+      showToast('Lütfen taranacak bir hedef alan adı girin.');
+      return;
+    }
+    const formatted = formatTargetDomain(rawTarget);
+    setIsDNSMapModalOpen(true);
+    setIsDNSMapLoading(true);
+    try {
+      const res = await FetchDNSAndReverseIP(formatted);
+      setDnsMapResult(res);
+      const neighborCount = res?.coHostedDomains?.length || 0;
+      showToast(`${res?.records?.length || 0} DNS kaydı ve ${neighborCount} komşu site haritalandı.`);
+    } catch (e) {
+      showToast(`DNS Haritası hatası: ${e}`);
+    } finally {
+      setIsDNSMapLoading(false);
+    }
+  }, [target, showToast]);
+
   // Go backend üzerinden dork üretme veya CRT/Wayback keşif çalıştırma
   const handleGenerate = useCallback(async (customTarget, engineOverride) => {
     const rawTarget = customTarget !== undefined ? customTarget : target;
@@ -298,6 +330,12 @@ export function useDorkful() {
 
     // Arama kutusundaki hedefi normalize edilmiş haliyle güncelle
     setTarget(formatted);
+
+    // DNS & Reverse IP Ağ Haritası
+    if (engine === 'dnsmap') {
+      await handleScanDNSMap(formatted);
+      return;
+    }
 
     // JS Secret Miner Canlı Analizi
     if (engine === 'jsminer') {
@@ -484,7 +522,7 @@ export function useDorkful() {
       const engineLabel = formatEngineName(engine);
       showToast(`${engineLabel} sorgu hatası: ${e}`);
     }
-  }, [target, selectedEngine, activeWorkspace, settings, runProbeTarget, handleScanJavaScript, showToast]);
+  }, [target, selectedEngine, activeWorkspace, settings, runProbeTarget, handleScanJavaScript, handleScanDNSMap, showToast]);
 
   // Manuel GitHub canlı sızıntı taraması tetikleme
   const handleScanGitHubLeaks = useCallback(async () => {
@@ -803,11 +841,25 @@ export function useDorkful() {
     }
   }, [reloadWorkspaces, showToast]);
 
-  // Seçilen kategoriye göre filtrelenmiş dorklar
+  // Seçilen kategoriye veya tespit edilen teknolojiye göre filtrelenmiş dorklar
   const filteredDorks = useMemo(() => {
     if (!Array.isArray(dorks)) return [];
-    return dorks.filter(d => matchCategory(d.category, filter));
-  }, [dorks, filter]);
+
+    let list = dorks.filter(d => matchCategory(d.category, filter));
+
+    // Teknoloji parmak izi filtresi seçilmişse (örn: WordPress, Laravel, Next.js, PHP vb.)
+    if (selectedTechFilter) {
+      const term = selectedTechFilter.toLowerCase();
+      list = list.filter(d => {
+        if (d.techTag && d.techTag.toLowerCase() === term) return true;
+        const q = (d.query || '').toLowerCase();
+        const desc = (d.description || '').toLowerCase();
+        return q.includes(term) || desc.includes(term);
+      });
+    }
+
+    return list;
+  }, [dorks, filter, selectedTechFilter]);
 
   return {
     target,
@@ -908,5 +960,14 @@ export function useDorkful() {
     setIsJSAnalysisModalOpen,
     isJSAnalysisLoading,
     handleScanJavaScript,
+    // Akıllı Teknoloji Parmak İzi (Tech Fingerprinting)
+    selectedTechFilter,
+    setSelectedTechFilter,
+    // DNS & Reverse IP Haritası (Co-hosted Domains)
+    dnsMapResult,
+    isDNSMapModalOpen,
+    setIsDNSMapModalOpen,
+    isDNSMapLoading,
+    handleScanDNSMap,
   };
 }

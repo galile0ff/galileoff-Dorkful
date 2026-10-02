@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Search, Copy, Zap, Activity, ShieldCheck, ShieldAlert, RefreshCw, Flag, Shield } from 'lucide-react';
+import { Search, Copy, Zap, Activity, ShieldCheck, ShieldAlert, RefreshCw, Flag, Shield, Cpu } from 'lucide-react';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 
 // Tekil dork kartı bileşeni
@@ -57,6 +57,17 @@ export default function DorkCard({
             {dork.engine && dork.engine !== 'google' && (
               <span className="px-2 py-0.5 rounded text-[9px] font-mono font-medium border uppercase bg-white/[0.04] text-white/60 border-white/10 tracking-wider">
                 {dork.engine}
+              </span>
+            )}
+
+            {/* Teknoloji Eşleşmesi Rozeti (TechTag) */}
+            {dork.techTag && (
+              <span
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 text-amber-300 border border-amber-500/25 flex items-center gap-1"
+                title={`${dork.techTag} teknolojisiyle uyumlu dork`}
+              >
+                <Cpu size={10} className="text-amber-400" />
+                <span>{dork.techTag}</span>
               </span>
             )}
 

@@ -3,6 +3,7 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -10,9 +11,10 @@ import (
 	"dorkapp/backend/models"
 )
 
-// ProbeService, hedefin HTTP/HTTPS canlılık, durum kodu ve sunucu başlıklarını denetleyen servistir.
+// ProbeService, hedefin HTTP/HTTPS canlılık, durum kodu, sunucu başlıkları ve teknoloji parmak izlerini denetleyen servistir.
 type ProbeService struct {
-	client *http.Client
+	client             *http.Client
+	fingerprintService *FingerprintService
 }
 
 // NewProbeService, zaman aşımı ve TLS ayarları yapılandırılmış bir ProbeService örneği oluşturur.
@@ -35,6 +37,7 @@ func NewProbeService() *ProbeService {
 				return nil
 			},
 		},
+		fingerprintService: NewFingerprintService(),
 	}
 }
 
@@ -81,10 +84,11 @@ func (s *ProbeService) probeSingleURL(urlStr string, targetLabel string) models.
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
 		return models.ProbeResult{
-			Target:  targetLabel,
-			URL:     urlStr,
-			IsAlive: false,
-			Error:   err.Error(),
+			Target:       targetLabel,
+			URL:          urlStr,
+			IsAlive:      false,
+			Technologies: make([]models.TechnologyItem, 0),
+			Error:        err.Error(),
 		}
 	}
 
@@ -102,10 +106,18 @@ func (s *ProbeService) probeSingleURL(urlStr string, targetLabel string) models.
 			URL:            urlStr,
 			IsAlive:        false,
 			ResponseTimeMs: duration,
+			Technologies:   make([]models.TechnologyItem, 0),
 			Error:          err.Error(),
 		}
 	}
 	defer resp.Body.Close()
+
+	// Sayfa gövdesinin ilk 512KB'ını parmak izi tespiti için oku
+	bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
+	bodyStr := string(bodyBytes)
+
+	// Başlıklar, çerezler ve HTML üzerinden teknolojileri tespit et
+	techs := s.fingerprintService.DetectTechnologies(resp.Header, resp.Cookies(), bodyStr)
 
 	server := resp.Header.Get("Server")
 	contentType := resp.Header.Get("Content-Type")
@@ -119,6 +131,7 @@ func (s *ProbeService) probeSingleURL(urlStr string, targetLabel string) models.
 		Server:         server,
 		ContentType:    contentType,
 		IsAlive:        true,
+		Technologies:   techs,
 	}
 }
 

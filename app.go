@@ -21,6 +21,7 @@ type App struct {
 	multiEngineService *services.MultiEngineService
 	settingsService    *services.SettingsService
 	jsAnalyzerService  *services.JSAnalyzerService
+	dnsMapService      *services.DNSMapService
 }
 
 // NewApp, servis bağımlılıklarıyla birlikte yeni bir App örneği oluşturur.
@@ -35,6 +36,7 @@ func NewApp() *App {
 		multiEngineService: services.NewMultiEngineService(),
 		settingsService:    services.NewSettingsService(),
 		jsAnalyzerService:  services.NewJSAnalyzerService(),
+		dnsMapService:      services.NewDNSMapService(),
 	}
 }
 
@@ -253,3 +255,9 @@ func (a *App) SearchCensysHosts(target string) ([]models.CensysHostItem, error) 
 func (a *App) AnalyzeTargetJavaScript(target string) models.JSAnalysisResult {
 	return a.jsAnalyzerService.AnalyzeTarget(target)
 }
+
+// FetchDNSAndReverseIP, hedefin tüm DNS kayıtlarını çözümler ve aynı sunucudaki paylaşımlı komşu siteleri tespit eder.
+func (a *App) FetchDNSAndReverseIP(target string) models.DNSMapResult {
+	return a.dnsMapService.FetchDNSAndReverseIP(target)
+}
+

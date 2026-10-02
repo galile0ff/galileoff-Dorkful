@@ -75,14 +75,61 @@ func (s *DorkService) GenerateDorks(target string) []models.Dork {
 		if mitre == nil {
 			mitre = ResolveMitreAttack(t.Category, t.Template)
 		}
+		techTag := DetectDorkTechTag(query, t.Description)
 		dorks = append(dorks, models.Dork{
 			Query:       query,
 			Description: t.Description,
 			Category:    t.Category,
+			TechTag:     techTag,
 			Mitre:       mitre,
 		})
 	}
 	return dorks
+}
+
+// DetectDorkTechTag, dork sorgusu ve açıklamasına göre dorkun ait olduğu teknolojiyi otomatik tespit eder.
+func DetectDorkTechTag(query, description string) string {
+	combined := strings.ToLower(query + " " + description)
+	if strings.Contains(combined, "wp-") || strings.Contains(combined, "wordpress") || strings.Contains(combined, "xmlrpc") {
+		return "WordPress"
+	}
+	if strings.Contains(combined, "laravel") || strings.Contains(combined, "telescope") || strings.Contains(combined, "ignition") {
+		return "Laravel"
+	}
+	if strings.Contains(combined, "next.js") || strings.Contains(combined, "_next") || strings.Contains(combined, "build-manifest") {
+		return "Next.js"
+	}
+	if strings.Contains(combined, "django") || strings.Contains(combined, "settings.py") {
+		return "Django"
+	}
+	if strings.Contains(combined, "drupal") {
+		return "Drupal"
+	}
+	if strings.Contains(combined, "joomla") {
+		return "Joomla"
+	}
+	if strings.Contains(combined, "spring") || strings.Contains(combined, "actuator") {
+		return "Spring Boot"
+	}
+	if strings.Contains(combined, "asp.net") || strings.Contains(combined, "web.config") {
+		return "ASP.NET"
+	}
+	if strings.Contains(combined, "docker") || strings.Contains(combined, "docker-compose") {
+		return "Docker"
+	}
+	if strings.Contains(combined, "nginx") {
+		return "Nginx"
+	}
+	if strings.Contains(combined, "apache") || strings.Contains(combined, ".htaccess") {
+		return "Apache"
+	}
+	if strings.Contains(combined, "phpinfo") || strings.Contains(combined, "phpmyadmin") || strings.Contains(combined, ".php") {
+		return "PHP"
+	}
+	if strings.Contains(combined, ".git") || strings.Contains(combined, "github") {
+		return "Git"
+	}
+	return ""
 }
 
 // AddTemplate, çalışma zamanında yeni bir şablon ekler ve diske kaydeder.

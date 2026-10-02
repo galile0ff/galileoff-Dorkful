@@ -13,7 +13,8 @@ import {
   Target as TargetIcon,
   Layers,
   Settings,
-  Code2
+  Code2,
+  Network
 } from 'lucide-react';
 
 // Ana karşılama ve arama bölümü (Hero)
@@ -37,6 +38,7 @@ export default function Hero({
   onOpenWorkspaceModal,
   onOpenSettingsModal,
   onOpenJSAnalysis,
+  onOpenDNSMap,
   hasDorks = false
 }) {
   const ENGINES = [
@@ -45,6 +47,7 @@ export default function Hero({
     { id: 'shodan', label: 'Shodan', icon: Radio, desc: 'Açık Portlar & Servis Keşfi' },
     { id: 'censys', label: 'Censys', icon: Shield, desc: 'Sertifika & Host Analizi' },
     { id: 'jsminer', label: 'JS Miner', icon: Code2, desc: 'JavaScript Gizli API & Secret Avcısı', isLive: true },
+    { id: 'dnsmap', label: 'Ağ Haritası', icon: Network, desc: 'DNS & Reverse IP Komşu Siteler Haritası', isLive: true },
     { id: 'crtsh', label: 'CRT.sh', icon: Search, desc: 'Canlı Alt Alan Adı Keşfi', isLive: true },
     { id: 'wayback', label: 'Wayback', icon: History, desc: 'Geçmiş URL & Uç Noktalar', isLive: true },
   ];
@@ -145,7 +148,8 @@ export default function Hero({
                     selectedEngine === 'shodan' ? "Shodan için hedef domain veya IP" :
                       selectedEngine === 'censys' ? "Censys için hedef domain" :
                         selectedEngine === 'jsminer' ? "JS analizi yapılacak hedef (örn: target.com)" :
-                          "Hedef alan adı (örn: target.com)"
+                          selectedEngine === 'dnsmap' ? "DNS & Komşu Siteler için hedef (örn: target.com)" :
+                            "Hedef alan adı (örn: target.com)"
             }
             className="search-input search-input-hero"
             autoFocus
@@ -153,7 +157,7 @@ export default function Hero({
           <button onClick={() => onGenerate()} className="btn-generate btn-generate-hero">
             <Search size={14} />
             <span>
-              {selectedEngine === 'crtsh' || selectedEngine === 'wayback' || selectedEngine === 'jsminer' ? 'Keşfet' : 'Keşfet'}
+              {selectedEngine === 'crtsh' || selectedEngine === 'wayback' || selectedEngine === 'jsminer' || selectedEngine === 'dnsmap' ? 'Keşfet' : 'Keşfet'}
             </span>
           </button>
         </div>
@@ -174,6 +178,18 @@ export default function Hero({
 
         {/* Hızlı Aksiyon & Yönetim Çubuğu (Kategorilerden bağımsız, tam hizalı ve dengeli) */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 mt-2 pt-1 w-full max-w-2xl">
+          {/* DNS & Reverse IP Ağ Haritası Butonu */}
+          {onOpenDNSMap && (
+            <button
+              onClick={onOpenDNSMap}
+              className="px-3.5 py-1.5 rounded-full border border-cyan-500/25 text-xs text-cyan-300 hover:text-cyan-200 hover:border-cyan-500/50 bg-cyan-500/[0.04] hover:bg-cyan-500/[0.1] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm shadow-sm"
+              title="DNS Kayıtları ve Aynı Sunucudaki Komşu Siteler Haritası"
+            >
+              <Network size={12} className="text-cyan-400" />
+              <span>Ağ Haritası</span>
+            </button>
+          )}
+
           {/* JS Secret Miner Butonu */}
           {onOpenJSAnalysis && (
             <button

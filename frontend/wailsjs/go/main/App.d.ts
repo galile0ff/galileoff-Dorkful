@@ -24,6 +24,8 @@ export function ExportFindingsJSON():Promise<string>;
 
 export function ExportJSON(arg1:Array<models.Dork>):Promise<string>;
 
+export function FetchDNSAndReverseIP(arg1:string):Promise<models.DNSMapResult>;
+
 export function FetchSubdomains(arg1:string):Promise<Array<models.SubdomainResult>>;
 
 export function FetchWaybackURLs(arg1:string):Promise<Array<models.WaybackResult>>;

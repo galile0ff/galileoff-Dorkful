@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from 'react';
-import { Search, Download, Plus, SlidersHorizontal, Flag, Target, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Download, Plus, SlidersHorizontal, Flag, Target, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Sabit üst navigasyon çubuğu (Sticky Navbar)
 export default function Navbar({
@@ -20,7 +20,8 @@ export default function Navbar({
   onOpenManageModal,
   onOpenFindingsModal,
   findingsCount = 0,
-  onOpenWorkspaceModal
+  onOpenWorkspaceModal,
+  onOpenSettingsModal
 }) {
   const filterScrollRef = useRef(null);
 
@@ -130,6 +131,14 @@ export default function Navbar({
             title="Dork ve Kategorileri Yönet"
           >
             <SlidersHorizontal size={14} />
+          </button>
+
+          <button
+            onClick={onOpenSettingsModal}
+            className="btn-icon"
+            title="Ayarlar & API Kasası"
+          >
+            <Settings size={14} />
           </button>
 
           <button

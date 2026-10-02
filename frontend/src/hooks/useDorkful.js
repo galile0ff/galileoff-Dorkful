@@ -28,7 +28,15 @@ import {
   SetActiveWorkspaceID,
   FetchSubdomains,
   FetchWaybackURLs,
-  GenerateMultiEngineDorks
+  GenerateMultiEngineDorks,
+  GetSettings,
+  SaveSettings,
+  TestAPIKey,
+  QueryShodanInternetDB,
+  SearchGitHubLeaks,
+  SearchShodanHost,
+  SearchCensysHosts,
+  AnalyzeTargetJavaScript
 } from '../../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 import { CATEGORIES, matchCategory } from '../constants/categories';
@@ -40,6 +48,7 @@ const ENGINE_LABELS = {
   github: 'Github',
   shodan: 'Shodan',
   censys: 'Censys',
+  jsminer: 'JS Miner',
   crtsh: 'CRT.sh',
   wayback: 'Wayback'
 };
@@ -73,6 +82,10 @@ export function useDorkful() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
+  // Ayarlar & API Kasası State'leri
+  const [settings, setSettings] = useState(null);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
   // CRT.sh ve Wayback Canlı Keşif Sonuçları
   const [isReconModalOpen, setIsReconModalOpen] = useState(false);
   const [reconType, setReconType] = useState('crtsh');
@@ -80,6 +93,26 @@ export function useDorkful() {
   const [subdomains, setSubdomains] = useState([]);
   const [waybackUrls, setWaybackUrls] = useState([]);
   const [isReconLoading, setIsReconLoading] = useState(false);
+
+  // GitHub Canlı Kod Sızıntısı State'leri
+  const [githubLeaks, setGithubLeaks] = useState([]);
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
+  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+
+  // JS Secret Miner (JavaScript Gizli API & Secret Avcısı) State'leri
+  const [jsAnalysisResult, setJsAnalysisResult] = useState(null);
+  const [isJSAnalysisModalOpen, setIsJSAnalysisModalOpen] = useState(false);
+  const [isJSAnalysisLoading, setIsJSAnalysisLoading] = useState(false);
+
+  // Shodan Canlı Port & Zafiyet Analizi State'leri
+  const [shodanHosts, setShodanHosts] = useState([]);
+  const [isShodanModalOpen, setIsShodanModalOpen] = useState(false);
+  const [isShodanLoading, setIsShodanLoading] = useState(false);
+
+  // Censys Canlı Host & Servis Keşfi State'leri
+  const [censysHosts, setCensysHosts] = useState([]);
+  const [isCensysModalOpen, setIsCensysModalOpen] = useState(false);
+  const [isCensysLoading, setIsCensysLoading] = useState(false);
 
   // Aktif çalışma alanı nesnesi
   const activeWorkspace = useMemo(() => {
@@ -116,21 +149,28 @@ export function useDorkful() {
     }
   }, []);
 
-  // Backend'den kayıtlı tüm şablon, kategori, bulgu ve çalışma alanlarını yükleme
+  // Backend'den kayıtlı tüm şablon, kategori, bulgu, çalışma alanı ve ayarları yükleme
   const reloadData = useCallback(async () => {
     try {
-      const [tList, cList, fList, wList, activeId] = await Promise.all([
+      const [tList, cList, fList, wList, activeId, sData] = await Promise.all([
         GetTemplates(),
         GetCategories(),
         GetFindings(),
         GetWorkspaces(),
-        GetActiveWorkspaceID()
+        GetActiveWorkspaceID(),
+        GetSettings()
       ]);
       if (tList) setTemplates(tList);
       if (cList && cList.length > 0) setCategories(cList);
       if (fList) setFindings(fList);
       if (wList) setWorkspaces(wList);
       if (activeId) setActiveWorkspaceId(activeId);
+      if (sData) {
+        setSettings(sData);
+        if (sData.defaultSearchEngine) {
+          setSelectedEngine(sData.defaultSearchEngine);
+        }
+      }
     } catch (e) {
       console.warn("Veri yükleme uyarısı:", e);
     }
@@ -158,6 +198,7 @@ export function useDorkful() {
   const runProbeTarget = useCallback(async (targetToProbe) => {
     const t = targetToProbe !== undefined ? targetToProbe : target;
     if (!t || !t.trim()) return;
+    if (settings && settings.autoProbeTarget === false) return;
     setIsProbing(true);
     try {
       const res = await ProbeTarget(t);
@@ -168,7 +209,36 @@ export function useDorkful() {
     } finally {
       setIsProbing(false);
     }
-  }, [target]);
+  }, [target, settings]);
+
+  // Ayarları diske kaydetme
+  const handleSaveSettings = useCallback(async (newSettings) => {
+    try {
+      await SaveSettings(newSettings);
+      setSettings(newSettings);
+      if (newSettings.defaultSearchEngine) {
+        setSelectedEngine(newSettings.defaultSearchEngine);
+      }
+      showToast("Ayarlar başarıyla kaydedildi.");
+    } catch (e) {
+      showToast(`Ayar kaydetme hatası: ${e}`);
+      throw e;
+    }
+  }, [showToast]);
+
+  // API Anahtarı canlı testi
+  const handleTestAPIKey = useCallback(async (engine, key1, key2) => {
+    try {
+      return await TestAPIKey(engine, key1, key2);
+    } catch (e) {
+      return {
+        engine,
+        success: false,
+        message: `Hata: ${e}`,
+        details: ""
+      };
+    }
+  }, []);
 
   // Tekil bir endpoint / URL için HTTP denetimi çalıştırma
   const handleProbeURL = useCallback(async (url) => {
@@ -189,6 +259,28 @@ export function useDorkful() {
     }
   }, [target]);
 
+  // JavaScript Dosyalarından Gizli API & Secret Avcısı (JS Secret Miner) tetikleme
+  const handleScanJavaScript = useCallback(async (customTarget) => {
+    const rawTarget = customTarget || target;
+    if (!rawTarget || !rawTarget.trim()) {
+      showToast('Lütfen taranacak bir web hedefi veya alan adı girin.');
+      return;
+    }
+    const formatted = formatTargetDomain(rawTarget);
+    setIsJSAnalysisModalOpen(true);
+    setIsJSAnalysisLoading(true);
+    try {
+      const res = await AnalyzeTargetJavaScript(formatted);
+      setJsAnalysisResult(res);
+      const totalFindings = (res?.secrets?.length || 0) + (res?.endpoints?.length || 0);
+      showToast(`${res?.scannedScripts || 0} JS dosyası analiz edildi, ${totalFindings} rota/secret bulundu.`);
+    } catch (e) {
+      showToast(`JS analiz hatası: ${e}`);
+    } finally {
+      setIsJSAnalysisLoading(false);
+    }
+  }, [target, showToast]);
+
   // Go backend üzerinden dork üretme veya CRT/Wayback keşif çalıştırma
   const handleGenerate = useCallback(async (customTarget, engineOverride) => {
     const rawTarget = customTarget !== undefined ? customTarget : target;
@@ -206,6 +298,12 @@ export function useDorkful() {
 
     // Arama kutusundaki hedefi normalize edilmiş haliyle güncelle
     setTarget(formatted);
+
+    // JS Secret Miner Canlı Analizi
+    if (engine === 'jsminer') {
+      await handleScanJavaScript(formatted);
+      return;
+    }
 
     // CRT.sh Alt Alan Adı Keşfi
     if (engine === 'crtsh') {
@@ -258,7 +356,116 @@ export function useDorkful() {
       return;
     }
 
-    // GitHub, Shodan, Censys Dorkları
+    // GitHub Sızıntı Taraması ve Dorkları
+    if (engine === 'github') {
+      const targetProfile = activeWorkspace || {
+        id: "temp",
+        name: formatted.split('.')[0] || "Target",
+        domain: formatted,
+        asn: "",
+        ipRange: "",
+        githubOrg: formatted.split('.')[0] || ""
+      };
+
+      try {
+        const res = await GenerateMultiEngineDorks("github", targetProfile);
+        setDorks(res || []);
+
+        // Eğer kullanıcı GitHub Token girmişse canlı API taramasını başlat
+        if (settings?.githubToken && settings.githubToken.trim()) {
+          setIsGitHubModalOpen(true);
+          setIsGitHubLoading(true);
+          try {
+            const leaks = await SearchGitHubLeaks(formatted, targetProfile.githubOrg || "");
+            setGithubLeaks(leaks || []);
+            showToast(`${leaks ? leaks.length : 0} canlı sızıntı ve ${res ? res.length : 0} derin dork hazırlandı.`);
+          } catch (err) {
+            showToast(`GitHub canlı arama hatası: ${err}`);
+          } finally {
+            setIsGitHubLoading(false);
+          }
+        } else {
+          showToast(`${res ? res.length : 0} Github sorgusu oluşturuldu. (Canlı sızıntı taraması için Ayarlar'dan Token ekleyebilirsiniz)`);
+        }
+      } catch (e) {
+        showToast(`Github sorgu hatası: ${e}`);
+      }
+      return;
+    }
+
+    // Shodan Port & Zafiyet Analizi ve Dorkları
+    if (engine === 'shodan') {
+      const targetProfile = activeWorkspace || {
+        id: "temp",
+        name: formatted.split('.')[0] || "Target",
+        domain: formatted,
+        asn: "",
+        ipRange: "",
+        githubOrg: formatted.split('.')[0] || ""
+      };
+
+      try {
+        const res = await GenerateMultiEngineDorks("shodan", targetProfile);
+        setDorks(res || []);
+
+        // Shodan canlı port ve zafiyet taramasını başlat (Key varsa API, yoksa InternetDB)
+        setIsShodanModalOpen(true);
+        setIsShodanLoading(true);
+        try {
+          const hosts = await SearchShodanHost(formatted);
+          setShodanHosts(hosts || []);
+          const portCount = (hosts || []).reduce((acc, h) => acc + (h.ports ? h.ports.length : 0), 0);
+          const isKeyless = hosts && hosts[0] && hosts[0].isKeyless;
+          showToast(`${res ? res.length : 0} Shodan dorku ve ${portCount} açık port tespit edildi (${isKeyless ? 'InternetDB' : 'Shodan API'}).`);
+        } catch (shodanErr) {
+          showToast(`Shodan canlı tarama uyarısı: ${shodanErr}`);
+        } finally {
+          setIsShodanLoading(false);
+        }
+      } catch (e) {
+        showToast(`Shodan sorgu hatası: ${e}`);
+      }
+      return;
+    }
+
+    // Censys Host & Servis Keşfi ve Dorkları
+    if (engine === 'censys') {
+      const targetProfile = activeWorkspace || {
+        id: "temp",
+        name: formatted.split('.')[0] || "Target",
+        domain: formatted,
+        asn: "",
+        ipRange: "",
+        githubOrg: formatted.split('.')[0] || ""
+      };
+
+      try {
+        const res = await GenerateMultiEngineDorks("censys", targetProfile);
+        setDorks(res || []);
+
+        // Eğer kullanıcı Censys API Token veya ID/Secret girmişse canlı arama yap
+        if ((settings?.censysId && settings.censysId.trim()) || (settings?.censysSecret && settings.censysSecret.trim())) {
+          setIsCensysModalOpen(true);
+          setIsCensysLoading(true);
+          try {
+            const cHosts = await SearchCensysHosts(formatted);
+            setCensysHosts(cHosts || []);
+            showToast(`${cHosts ? cHosts.length : 0} canlı Censys hostu ve ${res ? res.length : 0} Censys dorku hazırlandı.`);
+          } catch (cErr) {
+            showToast(`Censys canlı tarama uyarısı: ${cErr}`);
+          } finally {
+            setIsCensysLoading(false);
+          }
+        } else {
+          showToast(`${res ? res.length : 0} Censys sorgusu oluşturuldu. (Canlı host keşfi için Ayarlar'dan API Token ekleyebilirsiniz)`);
+        }
+      } catch (e) {
+        showToast(`Censys sorgu hatası: ${e}`);
+      }
+      return;
+    }
+
+    // Diğer Genel Motor Dorkları
     try {
       const targetProfile = activeWorkspace || {
         id: "temp",
@@ -277,7 +484,60 @@ export function useDorkful() {
       const engineLabel = formatEngineName(engine);
       showToast(`${engineLabel} sorgu hatası: ${e}`);
     }
-  }, [target, selectedEngine, activeWorkspace, runProbeTarget, showToast]);
+  }, [target, selectedEngine, activeWorkspace, settings, runProbeTarget, handleScanJavaScript, showToast]);
+
+  // Manuel GitHub canlı sızıntı taraması tetikleme
+  const handleScanGitHubLeaks = useCallback(async () => {
+    if (!target.trim()) return;
+    const formatted = formatTargetDomain(target);
+    const org = activeWorkspace?.githubOrg || formatted.split('.')[0] || "";
+    setIsGitHubModalOpen(true);
+    setIsGitHubLoading(true);
+    try {
+      const leaks = await SearchGitHubLeaks(formatted, org);
+      setGithubLeaks(leaks || []);
+      showToast(`${leaks ? leaks.length : 0} canlı GitHub sızıntısı bulundu.`);
+    } catch (e) {
+      showToast(`GitHub tarama hatası: ${e}`);
+    } finally {
+      setIsGitHubLoading(false);
+    }
+  }, [target, activeWorkspace, showToast]);
+
+  // Manuel Shodan canlı taraması tetikleme
+  const handleScanShodan = useCallback(async () => {
+    if (!target.trim()) return;
+    const formatted = formatTargetDomain(target);
+    setIsShodanModalOpen(true);
+    setIsShodanLoading(true);
+    try {
+      const hosts = await SearchShodanHost(formatted);
+      setShodanHosts(hosts || []);
+      const portCount = (hosts || []).reduce((acc, h) => acc + (h.ports ? h.ports.length : 0), 0);
+      showToast(`${hosts ? hosts.length : 0} host ve ${portCount} açık port tespit edildi.`);
+    } catch (e) {
+      showToast(`Shodan tarama hatası: ${e}`);
+    } finally {
+      setIsShodanLoading(false);
+    }
+  }, [target, showToast]);
+
+  // Manuel Censys canlı taraması tetikleme
+  const handleScanCensys = useCallback(async () => {
+    if (!target.trim()) return;
+    const formatted = formatTargetDomain(target);
+    setIsCensysModalOpen(true);
+    setIsCensysLoading(true);
+    try {
+      const hosts = await SearchCensysHosts(formatted);
+      setCensysHosts(hosts || []);
+      showToast(`${hosts ? hosts.length : 0} Censys host kaydı bulundu.`);
+    } catch (e) {
+      showToast(`Censys tarama hatası: ${e}`);
+    } finally {
+      setIsCensysLoading(false);
+    }
+  }, [target, showToast]);
 
   // Çalışma zamanında yeni özel dork ekleme
   const handleAddCustomDork = useCallback(async ({ template, description, category }) => {
@@ -545,6 +805,7 @@ export function useDorkful() {
 
   // Seçilen kategoriye göre filtrelenmiş dorklar
   const filteredDorks = useMemo(() => {
+    if (!Array.isArray(dorks)) return [];
     return dorks.filter(d => matchCategory(d.category, filter));
   }, [dorks, filter]);
 
@@ -616,5 +877,36 @@ export function useDorkful() {
     subdomains,
     waybackUrls,
     isReconLoading,
+    // Ayarlar & API Kasası State/Aksiyonları
+    settings,
+    setSettings,
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
+    handleSaveSettings,
+    handleTestAPIKey,
+    // GitHub Canlı Kod Sızıntısı State/Aksiyonları
+    githubLeaks,
+    isGitHubModalOpen,
+    setIsGitHubModalOpen,
+    isGitHubLoading,
+    handleScanGitHubLeaks,
+    // Shodan Canlı Port & Zafiyet State/Aksiyonları
+    shodanHosts,
+    isShodanModalOpen,
+    setIsShodanModalOpen,
+    isShodanLoading,
+    handleScanShodan,
+    // Censys Canlı Host & Servis State/Aksiyonları
+    censysHosts,
+    isCensysModalOpen,
+    setIsCensysModalOpen,
+    isCensysLoading,
+    handleScanCensys,
+    // JS Secret Miner (JavaScript Gizli API & Secret Avcısı)
+    jsAnalysisResult,
+    isJSAnalysisModalOpen,
+    setIsJSAnalysisModalOpen,
+    isJSAnalysisLoading,
+    handleScanJavaScript,
   };
 }

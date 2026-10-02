@@ -27,24 +27,33 @@ export default function FlagFindingModal({
   // Modal açıldığında varsayılan değerleri hazırla
   useEffect(() => {
     if (isOpen && dork) {
-      setSeverity('High');
-      setNotes('');
-      setMitreTechniqueId(dork.mitre ? dork.mitre.techniqueId : 'T1593.002');
+      setSeverity(dork.severity || 'High');
+      setNotes(dork.notes || '');
+      setMitreTechniqueId(dork.mitre ? dork.mitre.techniqueId : (dork.mitreTechniqueId || 'T1593.002'));
 
-      // Dork içindeki inurl: değerini tespit edip olası kanıt linki öner
-      let suggestedURL = target || '';
-      if (suggestedURL && !suggestedURL.startsWith('http')) {
-        suggestedURL = `https://${suggestedURL}`;
+      // 1. Doğrudan bulunan gerçek kanıt linki (GitHub sızıntı dosyası, Shodan/Censys host linki vb.)
+      const directEvidence = dork.evidenceUrl || dork.evidenceURL || dork.htmlUrl || dork.snapshotUrl || dork.url || '';
+
+      if (directEvidence && directEvidence.trim()) {
+        setEvidenceUrl(directEvidence.trim());
+      } else {
+        // 2. Dork içindeki inurl: değerini tespit edip hedef üzerinde olası kanıt linki öner
+        let suggestedURL = target || '';
+        if (suggestedURL && !suggestedURL.startsWith('http')) {
+          suggestedURL = `https://${suggestedURL}`;
+        }
+
+        const inurlMatch = dork.query ? dork.query.match(/inurl:([^\s|)]+)/i) : null;
+        if (inurlMatch && inurlMatch[1]) {
+          let path = inurlMatch[1].replace(/["']/g, '');
+          if (!path.startsWith('/')) path = '/' + path;
+          suggestedURL = `${suggestedURL}${path}`;
+        } else if (dork.searchUrl) {
+          suggestedURL = dork.searchUrl;
+        }
+
+        setEvidenceUrl(suggestedURL);
       }
-
-      const inurlMatch = dork.query ? dork.query.match(/inurl:([^\s|)]+)/i) : null;
-      if (inurlMatch && inurlMatch[1]) {
-        let path = inurlMatch[1].replace(/["']/g, '');
-        if (!path.startsWith('/')) path = '/' + path;
-        suggestedURL = `${suggestedURL}${path}`;
-      }
-
-      setEvidenceUrl(suggestedURL);
     }
   }, [isOpen, dork, target]);
 
@@ -74,7 +83,7 @@ export default function FlagFindingModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-fadeIn"
       onClick={onClose}
     >
       <div

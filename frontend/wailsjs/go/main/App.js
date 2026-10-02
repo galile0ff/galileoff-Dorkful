@@ -10,6 +10,10 @@ export function AddFinding(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
   return window['go']['main']['App']['AddFinding'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
+export function AnalyzeTargetJavaScript(arg1) {
+  return window['go']['main']['App']['AnalyzeTargetJavaScript'](arg1);
+}
+
 export function ClearFindings() {
   return window['go']['main']['App']['ClearFindings']();
 }
@@ -70,6 +74,10 @@ export function GetFindings() {
   return window['go']['main']['App']['GetFindings']();
 }
 
+export function GetSettings() {
+  return window['go']['main']['App']['GetSettings']();
+}
+
 export function GetTemplates() {
   return window['go']['main']['App']['GetTemplates']();
 }
@@ -90,6 +98,10 @@ export function ProbeURL(arg1) {
   return window['go']['main']['App']['ProbeURL'](arg1);
 }
 
+export function QueryShodanInternetDB(arg1) {
+  return window['go']['main']['App']['QueryShodanInternetDB'](arg1);
+}
+
 export function RenameCategory(arg1, arg2) {
   return window['go']['main']['App']['RenameCategory'](arg1, arg2);
 }
@@ -98,8 +110,28 @@ export function ResetToDefaults() {
   return window['go']['main']['App']['ResetToDefaults']();
 }
 
+export function SaveSettings(arg1) {
+  return window['go']['main']['App']['SaveSettings'](arg1);
+}
+
+export function SearchCensysHosts(arg1) {
+  return window['go']['main']['App']['SearchCensysHosts'](arg1);
+}
+
+export function SearchGitHubLeaks(arg1, arg2) {
+  return window['go']['main']['App']['SearchGitHubLeaks'](arg1, arg2);
+}
+
+export function SearchShodanHost(arg1) {
+  return window['go']['main']['App']['SearchShodanHost'](arg1);
+}
+
 export function SetActiveWorkspaceID(arg1) {
   return window['go']['main']['App']['SetActiveWorkspaceID'](arg1);
+}
+
+export function TestAPIKey(arg1, arg2, arg3) {
+  return window['go']['main']['App']['TestAPIKey'](arg1, arg2, arg3);
 }
 
 export function UpdateFinding(arg1, arg2, arg3, arg4) {

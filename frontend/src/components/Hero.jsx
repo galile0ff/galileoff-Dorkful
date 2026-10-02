@@ -11,7 +11,9 @@ import {
   Shield,
   History,
   Target as TargetIcon,
-  Layers
+  Layers,
+  Settings,
+  Code2
 } from 'lucide-react';
 
 // Ana karşılama ve arama bölümü (Hero)
@@ -33,6 +35,8 @@ export default function Hero({
   onEngineChange,
   activeWorkspace,
   onOpenWorkspaceModal,
+  onOpenSettingsModal,
+  onOpenJSAnalysis,
   hasDorks = false
 }) {
   const ENGINES = [
@@ -40,6 +44,7 @@ export default function Hero({
     { id: 'github', label: 'GitHub', icon: GitBranch, desc: 'Sızmış Gizli Anahtarlar & .env' },
     { id: 'shodan', label: 'Shodan', icon: Radio, desc: 'Açık Portlar & Servis Keşfi' },
     { id: 'censys', label: 'Censys', icon: Shield, desc: 'Sertifika & Host Analizi' },
+    { id: 'jsminer', label: 'JS Miner', icon: Code2, desc: 'JavaScript Gizli API & Secret Avcısı', isLive: true },
     { id: 'crtsh', label: 'CRT.sh', icon: Search, desc: 'Canlı Alt Alan Adı Keşfi', isLive: true },
     { id: 'wayback', label: 'Wayback', icon: History, desc: 'Geçmiş URL & Uç Noktalar', isLive: true },
   ];
@@ -139,7 +144,8 @@ export default function Hero({
                   selectedEngine === 'github' ? "GitHub sızıntısı için aranacak hedef / repo" :
                     selectedEngine === 'shodan' ? "Shodan için hedef domain veya IP" :
                       selectedEngine === 'censys' ? "Censys için hedef domain" :
-                        "Hedef alan adı (örn: target.com)"
+                        selectedEngine === 'jsminer' ? "JS analizi yapılacak hedef (örn: target.com)" :
+                          "Hedef alan adı (örn: target.com)"
             }
             className="search-input search-input-hero"
             autoFocus
@@ -147,7 +153,7 @@ export default function Hero({
           <button onClick={() => onGenerate()} className="btn-generate btn-generate-hero">
             <Search size={14} />
             <span>
-              {selectedEngine === 'crtsh' || selectedEngine === 'wayback' ? 'Keşfet' : 'Keşfet'}
+              {selectedEngine === 'crtsh' || selectedEngine === 'wayback' || selectedEngine === 'jsminer' ? 'Keşfet' : 'Keşfet'}
             </span>
           </button>
         </div>
@@ -168,6 +174,18 @@ export default function Hero({
 
         {/* Hızlı Aksiyon & Yönetim Çubuğu (Kategorilerden bağımsız, tam hizalı ve dengeli) */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 mt-2 pt-1 w-full max-w-2xl">
+          {/* JS Secret Miner Butonu */}
+          {onOpenJSAnalysis && (
+            <button
+              onClick={onOpenJSAnalysis}
+              className="px-3.5 py-1.5 rounded-full border border-amber-500/25 text-xs text-amber-300 hover:text-amber-200 hover:border-amber-500/50 bg-amber-500/[0.04] hover:bg-amber-500/[0.1] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
+              title="JavaScript Dosyalarından Gizli API ve Secret Tara"
+            >
+              <Code2 size={12} className="text-amber-400" />
+              <span>JS Miner</span>
+            </button>
+          )}
+
           {/* Özel Dork Ekleme Butonu */}
           <button
             onClick={onOpenAddModal}
@@ -204,6 +222,16 @@ export default function Hero({
                 {findingsCount}
               </span>
             )}
+          </button>
+
+          {/* Ayarlar & API Kasası Butonu */}
+          <button
+            onClick={onOpenSettingsModal}
+            className="px-3.5 py-1.5 rounded-full border border-white/10 text-xs text-white/60 hover:text-white hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.06] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
+            title="Ayarlar ve API Anahtarları Kasası"
+          >
+            <Settings size={12} className="text-white/50" />
+            <span>Ayarlar</span>
           </button>
         </div>
       </div>

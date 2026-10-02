@@ -11,14 +11,16 @@ import (
 
 // App, Wails ile Go backend iş mantığı arasındaki köprü (controller) yapısıdır.
 type App struct {
-	ctx           context.Context
-	dorkService   *services.DorkService
-	exportService *services.ExportService
-	probeService   *services.ProbeService
-	findingService *services.FindingService
-	workspaceService *services.WorkspaceService
-	reconService     *services.ReconService
+	ctx                context.Context
+	dorkService        *services.DorkService
+	exportService      *services.ExportService
+	probeService       *services.ProbeService
+	findingService     *services.FindingService
+	workspaceService   *services.WorkspaceService
+	reconService       *services.ReconService
 	multiEngineService *services.MultiEngineService
+	settingsService    *services.SettingsService
+	jsAnalyzerService  *services.JSAnalyzerService
 }
 
 // NewApp, servis bağımlılıklarıyla birlikte yeni bir App örneği oluşturur.
@@ -31,6 +33,8 @@ func NewApp() *App {
 		workspaceService:   services.NewWorkspaceService(),
 		reconService:       services.NewReconService(),
 		multiEngineService: services.NewMultiEngineService(),
+		settingsService:    services.NewSettingsService(),
+		jsAnalyzerService:  services.NewJSAnalyzerService(),
 	}
 }
 
@@ -207,4 +211,45 @@ func (a *App) ProbeSubdomainsBatch(subdomains []string) map[string]models.ProbeR
 	})
 }
 
+// GetSettings, uygulamanın genel yapılandırmasını ve kayıtlı API anahtarlarını döner.
+func (a *App) GetSettings() models.AppSettings {
+	return a.settingsService.GetSettings()
+}
 
+// SaveSettings, uygulamanın ayarlarını ve API anahtarlarını günceller.
+func (a *App) SaveSettings(settings models.AppSettings) error {
+	return a.settingsService.SaveSettings(settings)
+}
+
+// TestAPIKey, seçilen istihbarat motoru için girilen anahtarın canlı doğrulama testini yapar.
+func (a *App) TestAPIKey(engine, key1, key2 string) models.APIKeyTestResult {
+	return a.settingsService.TestAPIKey(engine, key1, key2)
+}
+
+// QueryShodanInternetDB, hedefin IP ve açık portlarını Shodan'ın tamamen ücretsiz ve keysiz servisinden sorgular.
+func (a *App) QueryShodanInternetDB(target string) (*models.ShodanInternetDBResult, error) {
+	return a.settingsService.QueryShodanInternetDB(target)
+}
+
+// SearchGitHubLeaks, kullanıcının kayıtlı GitHub token'ı ile hedef alan adı ve organizasyon için canlı sızıntı taraması yapar.
+func (a *App) SearchGitHubLeaks(domain, org string) ([]models.GitHubLeakResult, error) {
+	settings := a.settingsService.GetSettings()
+	return a.multiEngineService.SearchGitHubLeaks(domain, org, settings.GithubToken)
+}
+
+// SearchShodanHost, hedef için Shodan API (key varsa) veya InternetDB (keysiz) üzerinden canlı port ve zafiyet taraması yapar.
+func (a *App) SearchShodanHost(target string) ([]models.ShodanHostItem, error) {
+	settings := a.settingsService.GetSettings()
+	return a.multiEngineService.SearchShodanHost(target, settings.ShodanKey)
+}
+
+// SearchCensysHosts, hedef için Censys Search API v2 üzerinden canlı host ve servis taraması yapar.
+func (a *App) SearchCensysHosts(target string) ([]models.CensysHostItem, error) {
+	settings := a.settingsService.GetSettings()
+	return a.multiEngineService.SearchCensysHosts(target, settings.CensysID, settings.CensysSecret)
+}
+
+// AnalyzeTargetJavaScript, hedefin web sayfalarında yer alan JavaScript dosyalarını indirip gizli API uç noktaları ve sızdırılmış anahtarları tespit eder.
+func (a *App) AnalyzeTargetJavaScript(target string) models.JSAnalysisResult {
+	return a.jsAnalyzerService.AnalyzeTarget(target)
+}

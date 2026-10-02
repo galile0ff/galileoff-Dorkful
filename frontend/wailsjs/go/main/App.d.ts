@@ -6,6 +6,8 @@ export function AddCustomDork(arg1:string,arg2:string,arg3:string):Promise<void>
 
 export function AddFinding(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string):Promise<models.Finding>;
 
+export function AnalyzeTargetJavaScript(arg1:string):Promise<models.JSAnalysisResult>;
+
 export function ClearFindings():Promise<void>;
 
 export function CreateWorkspace(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<models.Workspace>;
@@ -36,6 +38,8 @@ export function GetCategories():Promise<Array<string>>;
 
 export function GetFindings():Promise<Array<models.Finding>>;
 
+export function GetSettings():Promise<models.AppSettings>;
+
 export function GetTemplates():Promise<Array<models.Template>>;
 
 export function GetWorkspaces():Promise<Array<models.Workspace>>;
@@ -46,11 +50,23 @@ export function ProbeTarget(arg1:string):Promise<models.ProbeResult>;
 
 export function ProbeURL(arg1:string):Promise<models.ProbeResult>;
 
+export function QueryShodanInternetDB(arg1:string):Promise<models.ShodanInternetDBResult>;
+
 export function RenameCategory(arg1:string,arg2:string):Promise<void>;
 
 export function ResetToDefaults():Promise<void>;
 
+export function SaveSettings(arg1:models.AppSettings):Promise<void>;
+
+export function SearchCensysHosts(arg1:string):Promise<Array<models.CensysHostItem>>;
+
+export function SearchGitHubLeaks(arg1:string,arg2:string):Promise<Array<models.GitHubLeakResult>>;
+
+export function SearchShodanHost(arg1:string):Promise<Array<models.ShodanHostItem>>;
+
 export function SetActiveWorkspaceID(arg1:string):Promise<void>;
+
+export function TestAPIKey(arg1:string,arg2:string,arg3:string):Promise<models.APIKeyTestResult>;
 
 export function UpdateFinding(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 

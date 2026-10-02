@@ -43,7 +43,7 @@ export default function JSAnalysisModal({
   const scripts = result?.scripts || [];
   const error = result?.error || null;
 
-  // Arama ve filtreleme mantığı (Tüm hooklar erken dönüşten önce çağrılmalıdır)
+  // Arama ve filtreleme mantığı (Tüm hooklar erken dönüşten önce çağrılıyor)
   const filteredSecrets = useMemo(() => {
     if (!searchTerm.trim()) return secrets;
     const term = searchTerm.toLowerCase();
@@ -170,22 +170,20 @@ export default function JSAnalysisModal({
           <div className="flex items-center gap-1.5 p-1 bg-white/[0.03] border border-white/5 rounded-xl">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                activeTab === 'all'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${activeTab === 'all'
                   ? 'bg-white/15 text-white shadow-sm'
                   : 'text-white/50 hover:text-white/80'
-              }`}
+                }`}
             >
               Tümü ({secrets.length + endpoints.length})
             </button>
 
             <button
               onClick={() => setActiveTab('secrets')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'secrets'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === 'secrets'
                   ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                   : 'text-white/50 hover:text-white/80'
-              }`}
+                }`}
             >
               <Key size={13} className="text-red-400" />
               <span>Gizli Secret'lar</span>
@@ -196,11 +194,10 @@ export default function JSAnalysisModal({
 
             <button
               onClick={() => setActiveTab('endpoints')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'endpoints'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === 'endpoints'
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
                   : 'text-white/50 hover:text-white/80'
-              }`}
+                }`}
             >
               <Network size={13} className="text-cyan-400" />
               <span>Dahili API Uç Noktaları</span>
@@ -211,11 +208,10 @@ export default function JSAnalysisModal({
 
             <button
               onClick={() => setActiveTab('scripts')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'scripts'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === 'scripts'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                   : 'text-white/50 hover:text-white/80'
-              }`}
+                }`}
             >
               <FileCheck2 size={13} className="text-amber-400" />
               <span>Taranan Scriptler</span>
@@ -530,9 +526,8 @@ export default function JSAnalysisModal({
                         >
                           <div className="flex items-center gap-2.5 flex-1 min-w-0">
                             <span
-                              className={`w-2 h-2 rounded-full shrink-0 ${
-                                isOk ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-red-400'
-                              }`}
+                              className={`w-2 h-2 rounded-full shrink-0 ${isOk ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-red-400'
+                                }`}
                             />
                             <span className="text-white/80 truncate" title={sc.url}>
                               {sc.url}
@@ -547,9 +542,8 @@ export default function JSAnalysisModal({
                             )}
 
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] ${
-                                isOk ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                              }`}
+                              className={`px-2 py-0.5 rounded text-[10px] ${isOk ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                }`}
                             >
                               {sc.statusCode || 'ERR'}
                             </span>

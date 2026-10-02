@@ -124,6 +124,9 @@ export function useDorkful() {
   const [isDNSMapModalOpen, setIsDNSMapModalOpen] = useState(false);
   const [isDNSMapLoading, setIsDNSMapLoading] = useState(false);
 
+  // CTI & Pentest Yönetici Raporu (Executive Report) Modalı
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
   // Aktif çalışma alanı nesnesi
   const activeWorkspace = useMemo(() => {
     return workspaces.find(w => w.id === activeWorkspaceId) || null;
@@ -969,5 +972,8 @@ export function useDorkful() {
     setIsDNSMapModalOpen,
     isDNSMapLoading,
     handleScanDNSMap,
+    // CTI & Pentest Yönetici Raporu (Executive Report)
+    isReportModalOpen,
+    setIsReportModalOpen,
   };
 }

@@ -14,7 +14,8 @@ import {
   Layers,
   Settings,
   Code2,
-  Network
+  Network,
+  FileText
 } from 'lucide-react';
 
 // Ana karşılama ve arama bölümü (Hero)
@@ -39,6 +40,7 @@ export default function Hero({
   onOpenSettingsModal,
   onOpenJSAnalysis,
   onOpenDNSMap,
+  onOpenReport,
   hasDorks = false
 }) {
   const ENGINES = [
@@ -199,6 +201,18 @@ export default function Hero({
             >
               <Code2 size={12} className="text-amber-400" />
               <span>JS Miner</span>
+            </button>
+          )}
+
+          {/* CTI & Pentest Yönetici Raporu Butonu */}
+          {onOpenReport && (
+            <button
+              onClick={onOpenReport}
+              className="px-3.5 py-1.5 rounded-full border border-white/20 text-xs text-white/80 hover:text-white hover:border-white/40 bg-white/[0.04] hover:bg-white/[0.08] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm shadow-sm"
+              title="CTI & Pentest Yönetici Raporu Oluştur (PDF / HTML)"
+            >
+              <FileText size={12} className="text-white/70" />
+              <span>Rapor Al</span>
             </button>
           )}
 

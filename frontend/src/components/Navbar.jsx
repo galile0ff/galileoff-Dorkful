@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from 'react';
-import { Search, Download, Plus, SlidersHorizontal, Flag, Target, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Download, Plus, SlidersHorizontal, Flag, Target, Settings, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 
 // Sabit üst navigasyon çubuğu (Sticky Navbar)
 export default function Navbar({
@@ -21,7 +21,8 @@ export default function Navbar({
   onOpenFindingsModal,
   findingsCount = 0,
   onOpenWorkspaceModal,
-  onOpenSettingsModal
+  onOpenSettingsModal,
+  onOpenReport
 }) {
   const filterScrollRef = useRef(null);
 
@@ -153,6 +154,16 @@ export default function Navbar({
               </span>
             )}
           </button>
+
+          {onOpenReport && (
+            <button
+              onClick={onOpenReport}
+              className="btn-icon"
+              title="CTI & Pentest Yönetici Raporu (PDF / HTML)"
+            >
+              <FileText size={14} />
+            </button>
+          )}
 
           {hasDorks && (
             <button onClick={onExport} className="btn-icon" title="Dışa Aktar">

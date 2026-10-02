@@ -20,6 +20,7 @@ import ShodanResultsModal from '../components/ShodanResultsModal';
 import CensysResultsModal from '../components/CensysResultsModal';
 import JSAnalysisModal from '../components/JSAnalysisModal';
 import DNSNetworkMapModal from '../components/DNSNetworkMapModal';
+import ExecutiveReportModal from '../components/ExecutiveReportModal';
 
 export default function Home() {
   const {
@@ -128,6 +129,9 @@ export default function Home() {
     setIsDNSMapModalOpen,
     isDNSMapLoading,
     handleScanDNSMap,
+    // CTI & Pentest Yönetici Raporu
+    isReportModalOpen,
+    setIsReportModalOpen,
   } = useDorkful();
 
   return (
@@ -320,6 +324,21 @@ export default function Home() {
         }}
       />
 
+      {/* CTI & Pentest Yönetici Raporu Modalı */}
+      <ExecutiveReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        target={target}
+        activeWorkspace={activeWorkspace}
+        probeResult={probeResult}
+        findings={findings}
+        shodanHosts={shodanHosts}
+        censysHosts={censysHosts}
+        githubLeaks={githubLeaks}
+        jsAnalysisResult={jsAnalysisResult}
+        dnsMapResult={dnsMapResult}
+      />
+
       {/* Bulgu Olarak İşaretle (Flag as Finding) Modalı - Diğer tüm keşif modallarının en üstünde açılır */}
       <FlagFindingModal
         isOpen={isFlagModalOpen}
@@ -357,6 +376,7 @@ export default function Home() {
         findingsCount={findings.length}
         onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenReport={() => setIsReportModalOpen(true)}
       />
 
       {/* Ana Kaydırma Alanı */}
@@ -390,6 +410,7 @@ export default function Home() {
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           onOpenJSAnalysis={() => handleScanJavaScript(target)}
           onOpenDNSMap={() => handleScanDNSMap(target)}
+          onOpenReport={() => setIsReportModalOpen(true)}
           hasDorks={dorks.length > 0}
         />
 

@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { BrowserOpenURL, ClipboardSetText } from '../../wailsjs/runtime/runtime';
 
+import ModalShell from './ModalShell';
+
 export default function FindingsLockerModal({
   isOpen,
   onClose,
@@ -78,28 +80,28 @@ export default function FindingsLockerModal({
     switch (severity) {
       case 'Critical':
         return (
-          <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-red-500/15 text-red-400 border border-red-500/30 flex items-center gap-1.5 shadow-sm">
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-red-500/15 text-red-400 border border-red-500/30 flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
             Kritik
           </span>
         );
       case 'High':
         return (
-          <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-orange-500/15 text-orange-400 border border-orange-500/30 flex items-center gap-1.5 shadow-sm">
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-orange-500/15 text-orange-400 border border-orange-500/30 flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
             Yüksek
           </span>
         );
       case 'Medium':
         return (
-          <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             Orta
           </span>
         );
       default:
         return (
-          <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1.5 shadow-sm">
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             Düşük
           </span>
@@ -124,67 +126,36 @@ export default function FindingsLockerModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl animate-fadeIn"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-4xl h-[85vh] bg-[#0b0b0e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col shadow-2xl text-white shadow-black/90 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* =========================================================
-            ÜST BAŞLIK & AKSİYONLAR
-           ========================================================= */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white/80 shadow-inner">
-              <Flag size={18} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h3 className="text-base font-semibold text-white tracking-tight silver-glow">
-                  Bulgu Defteri & Kanıt Kasası
-                </h3>
-                <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-white/80 text-[11px] font-mono">
-                  {findings.length} Kayıt
-                </span>
-              </div>
-              <p className="text-xs text-white/50">
-                CTI operasyonu sırasında tespit edilen ve doğrulanmış güvenlik kanıtları
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {findings.length > 0 && (
-              <>
-                <button
-                  onClick={onExportFindings}
-                  className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-xs text-white font-medium tracking-wide flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
-                  title="Tüm bulguları JSON raporu olarak masaüstüne aktar"
-                >
-                  <Download size={13} />
-                  <span>Rapor Al (JSON)</span>
-                </button>
-                <button
-                  onClick={onClearFindings}
-                  className="p-2 text-white/30 hover:text-red-400 rounded-full hover:bg-white/5 transition-colors cursor-pointer"
-                  title="Tüm Bulguları Temizle"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </>
-            )}
-
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Bulgu Defteri & Kanıt Kasası"
+      subtitle="CTI operasyonu sırasında tespit edilen ve doğrulanmış güvenlik kanıtları"
+      icon={Flag}
+      maxWidth="max-w-4xl"
+      badge={`${findings.length} Kayıt`}
+      headerActions={
+        findings.length > 0 && (
+          <div className="flex items-center gap-1.5">
             <button
-              onClick={onClose}
-              className="p-2 text-white/40 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
-              title="Kapat"
+              onClick={onExportFindings}
+              className="glass-btn-secondary !py-1 text-xs"
+              title="Tüm bulguları JSON raporu olarak masaüstüne aktar"
             >
-              <X size={18} />
+              <Download size={12} />
+              <span>Rapor Al</span>
+            </button>
+            <button
+              onClick={onClearFindings}
+              className="p-1.5 text-white/40 hover:text-red-400 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+              title="Tüm Bulguları Temizle"
+            >
+              <Trash2 size={14} />
             </button>
           </div>
-        </div>
+        )
+      }
+    >
 
         {/* =========================================================
             METRİK VE İSTATİSTİK KARTLARI
@@ -443,7 +414,6 @@ export default function FindingsLockerModal({
             ))
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

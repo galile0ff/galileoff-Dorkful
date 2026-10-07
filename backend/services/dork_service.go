@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,6 +51,11 @@ func CleanTargetDomain(target string) string {
 		clean = clean[:idx]
 	}
 	clean = strings.TrimSpace(clean)
+
+	// Port numarası varsa ayıkla (örn. target.com:8080 -> target.com)
+	if host, _, err := net.SplitHostPort(clean); err == nil && host != "" {
+		clean = host
+	}
 
 	// Nokta içermiyorsa ve 'localhost' değilse varsayılan olarak '.com' ekle
 	if clean != "" && !strings.Contains(clean, ".") && !strings.EqualFold(clean, "localhost") {

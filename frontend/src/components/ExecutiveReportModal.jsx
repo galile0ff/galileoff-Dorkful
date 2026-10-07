@@ -534,16 +534,16 @@ export default function ExecutiveReportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="report-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/85 backdrop-blur-xl animate-fadeIn text-white">
+    <div className="report-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80 backdrop-blur-xl animate-fadeIn text-white">
       <div
-        className="report-modal-container relative w-full max-w-[97vw] xl:max-w-7xl h-[94vh] bg-[#09090d] border border-white/10 rounded-2xl flex flex-col shadow-2xl shadow-black overflow-hidden"
+        className="report-modal-container relative w-full max-w-[97vw] xl:max-w-7xl h-[94vh] bg-[#0a0a0c]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl sm:rounded-3xl flex flex-col shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.08)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Üst Modal Başlık ve Kontrol Çubuğu (Yazdırmada Otomatik Gizlenir) */}
-        <div className="no-print px-5 py-3 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
+        <div className="no-print px-5 py-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-white/[0.02]">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shadow-inner">
-              <FileText size={18} />
+            <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-white/80 shrink-0 shadow-inner">
+              <FileText size={16} />
             </div>
             <div>
               <div className="flex items-center gap-2">

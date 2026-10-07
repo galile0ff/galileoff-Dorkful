@@ -144,6 +144,7 @@ export namespace models {
 	}
 	export class DNSMapResult {
 	    target: string;
+	    resolvedIp: string;
 	    records: DNSRecordItem[];
 	    coHostedDomains: CoHostedDomainItem[];
 	    nodes: NetworkNode[];
@@ -157,6 +158,7 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.target = source["target"];
+	        this.resolvedIp = source["resolvedIp"];
 	        this.records = this.convertValues(source["records"], DNSRecordItem);
 	        this.coHostedDomains = this.convertValues(source["coHostedDomains"], CoHostedDomainItem);
 	        this.nodes = this.convertValues(source["nodes"], NetworkNode);

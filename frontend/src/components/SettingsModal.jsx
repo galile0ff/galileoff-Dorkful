@@ -23,6 +23,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
+import ModalShell from './ModalShell';
 
 export default function SettingsModal({
   isOpen,
@@ -138,77 +139,86 @@ export default function SettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
-      <div
-        className="relative w-full max-w-3xl h-[85vh] bg-[#0b0b0e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col shadow-2xl text-white shadow-black/90 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Üst Başlık & Sekmeler */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white/80 shadow-inner">
-              <Sliders size={18} />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white tracking-tight">
-                Ayarlar & API Kasası
-              </h3>
-              <p className="text-xs text-white/50">
-                İstihbarat motoru API anahtarlarını, tarama ve uygulama tercihlerini yönetin.
-              </p>
-            </div>
-          </div>
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Ayarlar & API Kasası"
+      subtitle="İstihbarat motoru API anahtarlarını, tarama ve uygulama tercihlerini yönetin"
+      icon={Sliders}
+      maxWidth="max-w-3xl"
+      badge="Settings Vault"
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <button
+            type="button"
+            onClick={() => {
+              setForm({
+                shodanKey: "",
+                githubToken: "",
+                censysId: "",
+                censysSecret: "",
+                autoProbeTarget: true,
+                probeTimeoutSec: 6,
+                customUserAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Dorkful-Security-Tool/1.0",
+                defaultSearchEngine: "google"
+              });
+              if (onShowToast) onShowToast("Form varsayılan değerlere sıfırlandı.");
+            }}
+            className="text-xs text-white/40 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <RotateCcw size={13} />
+            <span>Varsayılanlara Dön</span>
+          </button>
 
-          <div className="flex items-center gap-3">
-            {/* Sekme Değiştirici */}
-            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
-              <button
-                onClick={() => setActiveTab("keys")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === "keys"
-                    ? "bg-white text-black font-semibold shadow-sm"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Key size={13} />
-                <span>API Kasası</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("network")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === "network"
-                    ? "bg-white text-black font-semibold shadow-sm"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Globe size={13} />
-                <span>Ağ & Tarama</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("data")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === "data"
-                    ? "bg-white text-black font-semibold shadow-sm"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Database size={13} />
-                <span>Veri & Bakım</span>
-              </button>
-            </div>
-
-            {/* Kapat */}
+          <div className="flex items-center gap-2.5">
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 text-white/40 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              className="glass-btn-secondary"
             >
-              <X size={18} />
+              Vazgeç
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="glass-btn-primary"
+            >
+              <Check size={13} />
+              <span>Kaydet ve Kapat</span>
             </button>
           </div>
         </div>
+      }
+    >
+      {/* Raycast / Linear Tarzı Sekme Seçici */}
+      <div className="px-5 sm:px-6 py-2.5 border-b border-white/[0.08] bg-white/[0.015] flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setActiveTab("keys")}
+            className={`glass-tab-btn ${activeTab === "keys" ? "glass-tab-btn-active" : "glass-tab-btn-inactive"}`}
+          >
+            <Key size={13} />
+            <span>API Kasası</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("network")}
+            className={`glass-tab-btn ${activeTab === "network" ? "glass-tab-btn-active" : "glass-tab-btn-inactive"}`}
+          >
+            <Globe size={13} />
+            <span>Ağ & Tarama</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("data")}
+            className={`glass-tab-btn ${activeTab === "data" ? "glass-tab-btn-active" : "glass-tab-btn-inactive"}`}
+          >
+            <Database size={13} />
+            <span>Veri & Bakım</span>
+          </button>
+        </div>
+      </div>
 
-        {/* Gövde - Sekmelere Göre İçerik */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+      {/* Gövde - Sekmelere Göre İçerik */}
+      <div className="flex-1 overflow-y-auto p-5 sm:p-6 no-scrollbar space-y-6">
           {/* 1. SEKME: API KASASI */}
           {activeTab === "keys" && (
             <div className="space-y-6">
@@ -777,49 +787,6 @@ export default function SettingsModal({
             </div>
           )}
         </div>
-
-        {/* Alt Butonlar */}
-        <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-          <button
-            type="button"
-            onClick={() => {
-              setForm({
-                shodanKey: "",
-                githubToken: "",
-                censysId: "",
-                censysSecret: "",
-                autoProbeTarget: true,
-                probeTimeoutSec: 6,
-                customUserAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Dorkful-Security-Tool/1.0",
-                defaultSearchEngine: "google"
-              });
-              if (onShowToast) onShowToast("Form varsayılan değerlere sıfırlandı.");
-            }}
-            className="text-xs text-white/40 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
-          >
-            <RotateCcw size={13} />
-            <span>Varsayılanlara Dön</span>
-          </button>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              Vazgeç
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-xs font-semibold text-black bg-white hover:bg-neutral-200 transition-all shadow-lg shadow-white/10 active:scale-95 cursor-pointer flex items-center gap-1.5"
-            >
-              <Check size={14} />
-              <span>Kaydet ve Kapat</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

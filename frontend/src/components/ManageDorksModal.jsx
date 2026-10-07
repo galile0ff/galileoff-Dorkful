@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
-  X,
   Search,
   Plus,
   Trash2,
@@ -13,12 +12,17 @@ import {
   Code2,
   FileText,
   SlidersHorizontal,
-  FolderEdit
+  FolderEdit,
+  Sparkles,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
+import ModalShell from './ModalShell';
 
 export default function ManageDorksModal({
   isOpen,
   onClose,
+  initialTab = "dorks", // "dorks" | "add" | "categories"
   templates = [],
   categories = [],
   onAddDork,
@@ -29,21 +33,37 @@ export default function ManageDorksModal({
   onResetToDefaults,
   onOpenAddModal
 }) {
-  const [activeTab, setActiveTab] = useState("dorks"); // "dorks" | "categories"
+  const [activeTab, setActiveTab] = useState(initialTab); // "dorks" | "add" | "categories"
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All");
 
-  // Düzenleme durumu
+  // Dork Düzenleme Durumu
   const [editingIndex, setEditingIndex] = useState(null);
   const [editForm, setEditForm] = useState({ template: "", description: "", category: "" });
 
-  // Kategori yeniden adlandırma durumu
+  // Yeni Dork Ekleme Form State'i (Konsolide edildi)
+  const [newTemplate, setNewTemplate] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newCategory, setNewCategory] = useState("Admin");
+  const [customCategory, setCustomCategory] = useState("");
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [addError, setAddError] = useState("");
+  const [addSuccess, setAddSuccess] = useState(false);
+
+  // Kategori Yeniden Adlandırma Durumu
   const [renamingCategory, setRenamingCategory] = useState(null);
   const [newCategoryName, setNewCategoryName] = useState("");
 
   const safeTemplates = Array.isArray(templates) ? templates : [];
 
-  // Kategori bazlı dork sayıları (Hook'lar koşulsuz olarak en üstte çağrılır)
+  // initialTab değiştiğinde veya modal açıldığında güncelle
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
+
+  // Kategori bazlı dork sayıları
   const categoryStats = useMemo(() => {
     const counts = {};
     safeTemplates.forEach((t) => {
@@ -53,7 +73,7 @@ export default function ManageDorksModal({
     return counts;
   }, [safeTemplates]);
 
-  // Filtrelenmiş şablon listesi (Hook'lar koşulsuz olarak en üstte çağrılır)
+  // Filtrelenmiş şablon listesi
   const filteredTemplates = useMemo(() => {
     return safeTemplates
       .map((t, originalIndex) => ({
@@ -93,6 +113,48 @@ export default function ManageDorksModal({
     setEditingIndex(null);
   };
 
+  // Yeni dork ekleme gönderimi
+  const handleCreateDork = async (e) => {
+    if (e) e.preventDefault();
+    setAddError("");
+    setAddSuccess(false);
+
+    if (!newTemplate.trim()) {
+      setAddError("Lütfen bir dork şablonu girin.");
+      return;
+    }
+    if (!newDescription.trim()) {
+      setAddError("Lütfen bir açıklama girin.");
+      return;
+    }
+
+    const finalCategory = isCustomCategory
+      ? (customCategory.trim() || "Custom")
+      : newCategory;
+
+    try {
+      if (onAddDork) {
+        await onAddDork({
+          template: newTemplate.trim(),
+          description: newDescription.trim(),
+          category: finalCategory,
+        });
+      }
+
+      setNewTemplate("");
+      setNewDescription("");
+      setCustomCategory("");
+      setIsCustomCategory(false);
+      setAddSuccess(true);
+      setTimeout(() => {
+        setAddSuccess(false);
+        setActiveTab("dorks");
+      }, 1000);
+    } catch (err) {
+      setAddError(`Hata: ${err}`);
+    }
+  };
+
   // Kategori adını değiştir
   const handleSaveCategoryRename = async (oldCat) => {
     if (!newCategoryName.trim() || newCategoryName.trim() === oldCat) {
@@ -104,309 +166,392 @@ export default function ManageDorksModal({
     setNewCategoryName("");
   };
 
-  // React Rules of Hooks uyarınca koşullu çıkış TÜM HOOK'LARDAN SONRA yapılır
-  if (!isOpen) return null;
+  const availableCategories = categories.filter((c) => c !== "All");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
-      <div
-        className="relative w-full max-w-3xl h-[85vh] bg-[#0b0b0e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col shadow-2xl text-white shadow-black/90 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Üst Başlık & Sekmeler */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white/80 shadow-inner">
-              <SlidersHorizontal size={18} />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white tracking-tight">
-                Dork & Kategori Yöneticisi
-              </h3>
-              <p className="text-xs text-white/50">
-                Kayıtlı dorkları düzenleyin, silin veya kategorileri yönetin ({safeTemplates.length} dork kayıtlı).
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Sekme Değiştirici */}
-            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
-              <button
-                onClick={() => setActiveTab("dorks")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  activeTab === "dorks"
-                    ? "bg-white text-black font-semibold shadow-sm"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                Dorklar ({safeTemplates.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("categories")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  activeTab === "categories"
-                    ? "bg-white text-black font-semibold shadow-sm"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                Kategoriler ({Object.keys(categoryStats).length})
-              </button>
-            </div>
-
-            {/* Kapat */}
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Dork & Şablon Stüdyosu"
+      subtitle={`${safeTemplates.length} dork şablonu ve ${availableCategories.length} kategori kayıtlı`}
+      icon={SlidersHorizontal}
+      maxWidth="max-w-4xl"
+      badge="Dork Studio"
+      headerActions={
+        <div className="flex items-center gap-1.5">
+          {onResetToDefaults && (
             <button
-              onClick={onClose}
-              className="p-1.5 text-white/40 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-              title="Kapat"
+              onClick={onResetToDefaults}
+              className="glass-btn-ghost !text-[11px] text-white/50 hover:text-white"
+              title="Varsayılanlara Sıfırla"
             >
-              <X size={18} />
+              <RotateCcw size={12} />
+              <span className="hidden sm:inline">Varsayılanlar</span>
             </button>
-          </div>
+          )}
+        </div>
+      }
+    >
+      {/* Raycast / Linear Tarzı Sekme Seçici */}
+      <div className="px-5 sm:px-6 py-2.5 border-b border-white/[0.08] bg-white/[0.015] flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setActiveTab("dorks")}
+            className={`glass-tab-btn ${activeTab === "dorks" ? "glass-tab-btn-active" : "glass-tab-btn-inactive"}`}
+          >
+            <span>Dorklar ({safeTemplates.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("add")}
+            className={`glass-tab-btn ${activeTab === "add" ? "glass-tab-btn-active" : "glass-tab-btn-inactive"}`}
+          >
+            <Plus size={12} />
+            <span>Yeni Dork Ekle</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("categories")}
+            className={`glass-tab-btn ${activeTab === "categories" ? "glass-tab-btn-active" : "glass-tab-btn-inactive"}`}
+          >
+            <Tag size={12} />
+            <span>Kategoriler ({availableCategories.length})</span>
+          </button>
         </div>
 
+        {/* Dork Arama Çubuğu (Yalnızca dorklar sekmesinde gösterilir) */}
+        {activeTab === "dorks" && (
+          <div className="relative min-w-[180px] max-w-xs shrink-0">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Şablon veya açıklama ara..."
+              className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/15 focus:border-white/30 text-white placeholder-white/30 rounded-xl pl-8 pr-3 py-1.5 text-xs outline-none transition-all"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Modal Gövdesi */}
+      <div className="flex-1 overflow-y-auto p-5 sm:p-6 no-scrollbar">
         {/* =========================================================
-            SEKME 1: DORK LİSTESİ VE DÜZENLEME
+            TAB 1: DORK LİSTESİ & DÜZENLEME
            ========================================================= */}
         {activeTab === "dorks" && (
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Arama ve Filtre Kontrolleri */}
-            <div className="px-6 py-3 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-neutral-900/40">
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <div className="relative w-full max-w-xs">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Dork ara veya filtrele..."
-                    className="w-full pl-9 pr-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-white placeholder-white/25 outline-none focus:border-white/30 font-mono"
-                  />
-                </div>
-
-                {/* Kategori Filtresi */}
-                <select
-                  value={selectedCategoryFilter}
-                  onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                  className="px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-white outline-none focus:border-white/30 cursor-pointer"
-                >
-                  <option value="All" className="bg-neutral-900">Tüm Kategoriler</option>
-                  {Object.keys(categoryStats).map((cat) => (
-                    <option key={cat} value={cat} className="bg-neutral-900">
-                      {cat} ({categoryStats[cat]})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-4">
+            {/* Kategori Filtresi Hapları */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+              <button
+                onClick={() => setSelectedCategoryFilter("All")}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                  selectedCategoryFilter === "All"
+                    ? "bg-white text-black font-semibold"
+                    : "bg-white/[0.03] text-white/50 hover:text-white"
+                }`}
+              >
+                Tümü ({safeTemplates.length})
+              </button>
+              {availableCategories.map((cat) => (
                 <button
-                  onClick={onOpenAddModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-black bg-white hover:bg-neutral-200 rounded-lg transition-colors cursor-pointer"
+                  key={cat}
+                  onClick={() => setSelectedCategoryFilter(cat)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap ${
+                    selectedCategoryFilter === cat
+                      ? "bg-white text-black font-semibold"
+                      : "bg-white/[0.03] text-white/50 hover:text-white"
+                  }`}
                 >
-                  <Plus size={14} />
-                  Yeni Ekle
+                  {cat} ({categoryStats[cat] || 0})
                 </button>
-                <button
-                  onClick={onResetToDefaults}
-                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-colors cursor-pointer"
-                  title="Tüm dorkları orijinal fabrika ayarlarına sıfırla"
-                >
-                  <RotateCcw size={12} />
-                  <span>Sıfırla</span>
-                </button>
-              </div>
+              ))}
             </div>
 
             {/* Dork Listesi */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-3">
-              {filteredTemplates.length === 0 ? (
-                <div className="py-20 text-center text-xs text-white/30 font-mono">
-                  Eşleşen dork bulunamadı.
-                </div>
-              ) : (
-                filteredTemplates.map((t) => {
-                  const isEditing = editingIndex === t.originalIndex;
+            <div className="flex flex-col gap-2.5">
+              {filteredTemplates.map((t) => {
+                const isEditing = editingIndex === t.originalIndex;
 
-                  if (isEditing) {
-                    return (
-                      <div
-                        key={t.originalIndex}
-                        className="p-4 rounded-xl bg-white/[0.07] border border-white/25 flex flex-col gap-3 animate-fadeIn"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-white/90">Dork Düzenle</span>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => setEditingIndex(null)}
-                              className="px-2.5 py-1 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer"
-                            >
-                              İptal
-                            </button>
-                            <button
-                              onClick={handleSaveEdit}
-                              className="flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-white text-black rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
-                            >
-                              <Check size={12} /> Kaydet
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                          <input
-                            type="text"
-                            value={editForm.template}
-                            onChange={(e) => setEditForm({ ...editForm, template: e.target.value })}
-                            placeholder="Dork şablonu..."
-                            className="w-full px-3 py-1.5 bg-neutral-900 border border-white/15 rounded-lg text-xs font-mono text-white outline-none focus:border-white/40"
-                          />
-                          <input
-                            type="text"
-                            value={editForm.description}
-                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                            placeholder="Açıklama..."
-                            className="w-full px-3 py-1.5 bg-neutral-900 border border-white/15 rounded-lg text-xs text-white outline-none focus:border-white/40"
-                          />
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-white/40">Kategori:</span>
-                            <input
-                              type="text"
-                              value={editForm.category}
-                              onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                              placeholder="Kategori adı..."
-                              className="px-3 py-1.5 bg-neutral-900 border border-white/15 rounded-lg text-xs text-white outline-none focus:border-white/40 w-48"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-
+                if (isEditing) {
                   return (
                     <div
                       key={t.originalIndex}
-                      className="group p-3.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-white/20 transition-all flex items-start justify-between gap-4"
+                      className="p-4 rounded-2xl bg-white/[0.04] border border-white/20 flex flex-col gap-3"
                     >
-                      <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider bg-white/10 text-white/70 border border-white/10">
-                            {t.category}
-                          </span>
-                          {t.mitre && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                              {t.mitre.techniqueId}
-                            </span>
-                          )}
-                          <p className="text-xs text-white/80 font-medium truncate">
-                            {t.description}
-                          </p>
-                        </div>
-                        <code className="text-[11px] font-mono text-white/50 break-all bg-black/40 px-2 py-1 rounded border border-white/5">
-                          {t.template}
-                        </code>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-mono text-white/50 uppercase">Şablon Formülü</label>
+                        <input
+                          type="text"
+                          value={editForm.template}
+                          onChange={(e) => setEditForm({ ...editForm, template: e.target.value })}
+                          className="glass-input font-mono text-xs text-white"
+                        />
                       </div>
-
-                      <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity shrink-0 pt-1">
-                        <button
-                          onClick={() => handleStartEdit(t)}
-                          className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                          title="Düzenle"
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-mono text-white/50 uppercase">Açıklama</label>
+                        <input
+                          type="text"
+                          value={editForm.description}
+                          onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                          className="glass-input text-xs text-white"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pt-2">
+                        <select
+                          value={editForm.category}
+                          onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                          className="glass-input text-xs"
                         >
-                          <Edit2 size={13} />
-                        </button>
-                        <button
-                          onClick={() => onDeleteDork(t.originalIndex)}
-                          className="p-1.5 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
-                          title="Sil"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                          {availableCategories.map((cat) => (
+                            <option key={cat} value={cat} className="bg-neutral-900 text-white">
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditingIndex(null)}
+                            className="glass-btn-secondary !py-1 text-xs"
+                          >
+                            İptal
+                          </button>
+                          <button
+                            onClick={handleSaveEdit}
+                            className="glass-btn-primary !py-1 text-xs"
+                          >
+                            Kaydet
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
-                })
+                }
+
+                return (
+                  <div
+                    key={t.originalIndex}
+                    className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/15 flex items-center justify-between gap-4 transition-all group"
+                  >
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-white/5 text-white/60 border border-white/5 shrink-0">
+                          {t.category}
+                        </span>
+                        <p className="text-xs font-medium text-white/90 truncate">
+                          {t.description}
+                        </p>
+                      </div>
+                      <code className="text-[11px] font-mono text-white/50 truncate mt-1">
+                        {t.template}
+                      </code>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleStartEdit(t)}
+                        className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+                        title="Düzenle"
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                      <button
+                        onClick={() => onDeleteDork(t.originalIndex)}
+                        className="p-1.5 rounded-lg text-white/50 hover:text-red-400 hover:bg-white/5 transition-colors"
+                        title="Sil"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredTemplates.length === 0 && (
+                <div className="py-16 text-center text-white/40 text-xs">
+                  Aramanızla eşleşen dork şablonu bulunamadı.
+                </div>
               )}
             </div>
           </div>
         )}
 
         {/* =========================================================
-            SEKME 2: KATEGORİ YÖNETİMİ
+            TAB 2: YENİ DORK EKLE (KONSOLİDE FORM)
+           ========================================================= */}
+        {activeTab === "add" && (
+          <form onSubmit={handleCreateDork} className="max-w-xl mx-auto flex flex-col gap-5 py-2">
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white tracking-wide flex items-center gap-2">
+                  <Sparkles size={14} className="text-white/60" />
+                  Yeni Dork Şablonu Oluştur
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setNewTemplate((prev) => prev + "{target}")}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-[11px] font-mono transition-colors border border-white/10 cursor-pointer"
+                  title="Şablona {target} yer tutucusu ekle"
+                >
+                  + &#123;target&#125; Ekle
+                </button>
+              </div>
+
+              {/* Şablon Girişi */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase text-white/50">Dork Şablonu</label>
+                <input
+                  type="text"
+                  value={newTemplate}
+                  onChange={(e) => setNewTemplate(e.target.value)}
+                  placeholder="site:{target} inurl:admin ext:php"
+                  className="glass-input font-mono text-xs"
+                />
+                <p className="text-[10px] text-white/40">
+                  Arama yapılacak alan adını temsil etmek için <code>&#123;target&#125;</code> ifadesini kullanın.
+                </p>
+              </div>
+
+              {/* Açıklama */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase text-white/50">Açıklama / Başlık</label>
+                <input
+                  type="text"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  placeholder="Yönetici Giriş Panelleri ve PHP Dosyaları"
+                  className="glass-input text-xs"
+                />
+              </div>
+
+              {/* Kategori Seçimi */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-mono uppercase text-white/50">Kategori</label>
+                <div className="flex items-center gap-3">
+                  <select
+                    disabled={isCustomCategory}
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="glass-input text-xs flex-1 disabled:opacity-40"
+                  >
+                    {availableCategories.map((c) => (
+                      <option key={c} value={c} className="bg-neutral-900 text-white">
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+
+                  <label className="flex items-center gap-2 text-xs text-white/70 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isCustomCategory}
+                      onChange={(e) => setIsCustomCategory(e.target.checked)}
+                      className="rounded accent-white"
+                    />
+                    <span>Özel Kategori</span>
+                  </label>
+                </div>
+
+                {isCustomCategory && (
+                  <input
+                    type="text"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    placeholder="Yeni kategori adı..."
+                    className="glass-input text-xs mt-1"
+                  />
+                )}
+              </div>
+
+              {addError && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-xs">
+                  {addError}
+                </div>
+              )}
+
+              {addSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 text-xs flex items-center gap-2">
+                  <Check size={14} className="text-emerald-400" />
+                  <span>Şablon başarıyla eklendi!</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="glass-btn-primary mt-2 py-2.5 text-xs font-semibold"
+              >
+                <Plus size={14} />
+                <span>Şablonu Kaydet</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* =========================================================
+            TAB 3: KATEGORİ YÖNETİMİ
            ========================================================= */}
         {activeTab === "categories" && (
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-3">
-            <p className="text-xs text-white/50 mb-2">
-              Kategorileri yeniden adlandırabilir veya bir kategori altındaki tüm dorkları silebilirsiniz.
-            </p>
-
-            {Object.keys(categoryStats).map((cat) => {
+          <div className="flex flex-col gap-3">
+            {availableCategories.map((cat) => {
+              const count = categoryStats[cat] || 0;
               const isRenaming = renamingCategory === cat;
-              const count = categoryStats[cat];
 
               return (
                 <div
                   key={cat}
-                  className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-4"
+                  className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/15 flex items-center justify-between gap-4 transition-all"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/70">
-                      <Tag size={16} />
-                    </div>
-
-                    {!isRenaming ? (
-                      <div>
-                        <h4 className="text-sm font-semibold text-white tracking-tight">
-                          {cat}
-                        </h4>
-                        <span className="text-[11px] text-white/40">
-                          {count} adet dork şablonu içeriyor
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 flex-1">
+                  <div className="flex items-center gap-3">
+                    <Tag size={15} className="text-white/40" />
+                    {isRenaming ? (
+                      <div className="flex items-center gap-2">
                         <input
                           type="text"
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
-                          placeholder="Yeni kategori adı..."
-                          className="px-3 py-1.5 bg-neutral-900 border border-white/20 rounded-lg text-xs text-white outline-none focus:border-white/40 max-w-xs"
+                          className="glass-input !py-1 text-xs"
+                          placeholder="Yeni ad..."
                           autoFocus
                         />
                         <button
                           onClick={() => handleSaveCategoryRename(cat)}
-                          className="px-2.5 py-1 text-xs font-semibold bg-white text-black rounded-lg hover:bg-neutral-200 cursor-pointer"
+                          className="glass-btn-primary !py-1 text-xs"
                         >
                           Kaydet
                         </button>
                         <button
                           onClick={() => setRenamingCategory(null)}
-                          className="px-2 py-1 text-xs text-white/50 hover:text-white cursor-pointer"
+                          className="glass-btn-secondary !py-1 text-xs"
                         >
                           İptal
                         </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs font-semibold text-white">{cat}</span>
+                        <span className="text-[10px] font-mono text-white/40 px-2 py-0.5 rounded-full bg-white/5">
+                          {count} Dork
+                        </span>
                       </div>
                     )}
                   </div>
 
                   {!isRenaming && (
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => {
                           setRenamingCategory(cat);
                           setNewCategoryName(cat);
                         }}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-white/70 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+                        title="Kategoriyi Yeniden Adlandır"
                       >
-                        <FolderEdit size={12} />
-                        Yeniden Adlandır
+                        <Edit2 size={13} />
                       </button>
                       <button
                         onClick={() => onDeleteCategory(cat)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/20 transition-colors cursor-pointer"
-                        title="Bu kategoriye ait tüm dorkları sil"
+                        className="p-1.5 rounded-lg text-white/50 hover:text-red-400 hover:bg-white/5 transition-colors"
+                        title="Kategoriyi Sil"
                       >
-                        <Trash2 size={12} />
-                        Kategoriyi Sil
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   )}
@@ -416,6 +561,6 @@ export default function ManageDorksModal({
           </div>
         )}
       </div>
-    </div>
+    </ModalShell>
   );
 }

@@ -1,24 +1,23 @@
 "use client";
 
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
-  Plus,
   SlidersHorizontal,
   Flag,
   Globe,
   GitBranch,
   Radio,
   Shield,
-  History,
   Target as TargetIcon,
-  Layers,
   Settings,
-  Code2,
-  Network,
-  FileText
+  Activity,
+  FileText,
+  ChevronDown,
+  MoreHorizontal
 } from 'lucide-react';
 
-// Ana karşılama ve arama bölümü (Hero)
+// Ana karşılama ve sadeleştirilmiş komut/arama bölümü (Hero)
 export default function Hero({
   target,
   onTargetChange,
@@ -28,7 +27,6 @@ export default function Hero({
   selectedFilter,
   onFilterChange,
   onLogoClick,
-  onOpenAddModal,
   onOpenManageModal,
   onOpenFindingsModal,
   findingsCount = 0,
@@ -38,23 +36,42 @@ export default function Hero({
   activeWorkspace,
   onOpenWorkspaceModal,
   onOpenSettingsModal,
-  onOpenJSAnalysis,
-  onOpenDNSMap,
   onOpenReport,
+  onOpenReconHub,
   hasDorks = false
 }) {
+  const [engineMenuOpen, setEngineMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const engineMenuRef = useRef(null);
+  const moreMenuRef = useRef(null);
+
+  // Temel arama motorları
   const ENGINES = [
-    { id: 'google', label: 'Google', icon: Globe, desc: 'Web Dorkları & Hassas Dosyalar' },
-    { id: 'github', label: 'GitHub', icon: GitBranch, desc: 'Sızmış Gizli Anahtarlar & .env' },
-    { id: 'shodan', label: 'Shodan', icon: Radio, desc: 'Açık Portlar & Servis Keşfi' },
-    { id: 'censys', label: 'Censys', icon: Shield, desc: 'Sertifika & Host Analizi' },
-    { id: 'jsminer', label: 'JS Miner', icon: Code2, desc: 'JavaScript Gizli API & Secret Avcısı', isLive: true },
-    { id: 'dnsmap', label: 'Ağ Haritası', icon: Network, desc: 'DNS & Reverse IP Komşu Siteler Haritası', isLive: true },
-    { id: 'crtsh', label: 'CRT.sh', icon: Search, desc: 'Canlı Alt Alan Adı Keşfi', isLive: true },
-    { id: 'wayback', label: 'Wayback', icon: History, desc: 'Geçmiş URL & Uç Noktalar', isLive: true },
+    { id: 'google', label: 'Google', icon: Globe, desc: 'Web Dorkları & Hassas Belgeler' },
+    { id: 'github', label: 'GitHub', icon: GitBranch, desc: 'Canlı Kod Sızıntıları & Secretlar' },
+    { id: 'shodan', label: 'Shodan', icon: Radio, desc: 'Açık Portlar, Servisler & CVE' },
+    { id: 'censys', label: 'Censys', icon: Shield, desc: 'Hostlar, Sertifikalar & Servisler' }
   ];
 
-  const handleEngineClick = (engId) => {
+  const currentEngineObj = ENGINES.find(e => e.id === selectedEngine) || ENGINES[0];
+  const CurrentIcon = currentEngineObj.icon;
+
+  // Dışarı tıklandığında menüleri kapat
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (engineMenuRef.current && !engineMenuRef.current.contains(e.target)) {
+        setEngineMenuOpen(false);
+      }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectEngine = (engId) => {
+    setEngineMenuOpen(false);
     if (onEngineChange) {
       onEngineChange(engId);
     }
@@ -65,9 +82,10 @@ export default function Hero({
   };
 
   return (
-    <section className={`w-full flex flex-col items-center px-6 transition-all duration-300 ${hasDorks ? 'pt-14 pb-4' : 'py-2'}`}>
+    <section className={`w-full flex flex-col items-center px-4 sm:px-6 transition-all duration-300 ${hasDorks ? 'pt-10 pb-3' : 'py-3'}`}>
+      {/* Logo ve Başlık */}
       <h1
-        className="hero-title silver-glow cursor-pointer"
+        className="hero-title silver-glow cursor-pointer select-none"
         onClick={onLogoClick}
         title="Giriş ekranına dön"
       >
@@ -75,68 +93,74 @@ export default function Hero({
       </h1>
       <p className="hero-subtitle">galileoff Dork Tool</p>
 
-      {/* Çalışma Alanı (Target Workspace) Rozeti */}
-      <div className="flex items-center justify-center my-3">
+      {/* Sade Hedef Çalışma Alanı Rozeti */}
+      <div className="flex items-center justify-center my-2.5">
         <button
           onClick={onOpenWorkspaceModal}
-          className="px-3.5 py-1.5 rounded-full bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border border-white/10 hover:border-white/20 text-xs text-neutral-300 hover:text-white transition-all flex items-center gap-2 group cursor-pointer shadow-lg shadow-black/40"
-          title="Hedef Çalışma Alanlarını Yönet"
+          className="px-3 py-1 rounded-full bg-white/[0.025] hover:bg-white/[0.07] border border-white/[0.08] hover:border-white/20 text-xs text-white/60 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-xl group shadow-sm"
+          title="Hedef Çalışma Alanını Yönet veya Değiştir"
         >
-          <TargetIcon size={13} className="text-white/50 group-hover:text-white transition-colors" />
+          <TargetIcon size={12} className="text-white/40 group-hover:text-emerald-400 transition-colors" />
           {activeWorkspace ? (
-            <>
-              <span className="text-neutral-500 font-medium">Hedef:</span>
-              <span className="font-semibold text-white tracking-wide">
-                {activeWorkspace.name}
-              </span>
-              <span className="text-[10px] text-white/40 font-mono">
-                ({activeWorkspace.domain || 'Domain yok'})
-              </span>
-            </>
-          ) : (
-            <span className="text-white/50 group-hover:text-white/80 transition-colors">
-              Hedef Çalışma Alanı Seç / Oluştur
+            <span className="font-mono text-white/90 font-medium">
+              {activeWorkspace.domain || activeWorkspace.name}
             </span>
+          ) : (
+            <span>Çalışma Alanı Seç</span>
           )}
-          <span className="text-[9px] uppercase tracking-wider bg-white/10 px-1.5 py-0.5 rounded text-white/60 group-hover:text-white ml-0.5 border border-white/10">
-            Değiştir
-          </span>
+          <span className="text-[10px] text-white/30 group-hover:text-white/60 ml-0.5">▾</span>
         </button>
       </div>
 
-      <div className="hero-controls">
-        {/* Çoklu Motor Seçici Sekmeler (Engine Switcher) */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-2 w-full">
-          {ENGINES.map((eng) => {
-            const Icon = eng.icon;
-            const isSelected = selectedEngine === eng.id;
-            return (
-              <button
-                key={eng.id}
-                onClick={() => handleEngineClick(eng.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-md ${isSelected
-                  ? 'bg-white text-black font-semibold shadow-lg shadow-white/10 scale-102 border border-white'
-                  : 'bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.08] border border-white/5 hover:border-white/15'
-                  }`}
-                title={eng.desc}
-              >
-                <Icon size={12} className={isSelected ? 'text-black' : 'text-white/60'} />
-                <span>{eng.label}</span>
-                {eng.isLive && (
-                  <span className={`text-[8px] px-1 py-0.5 rounded uppercase font-mono tracking-wider ${isSelected
-                    ? 'bg-black/15 text-black font-bold'
-                    : 'bg-white/10 text-white/70 border border-white/10'
-                    }`}>
-                    Canlı
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div className={`hero-controls max-w-2xl w-full relative ${engineMenuOpen ? 'z-50' : 'z-20'}`}>
+        {/* Raycast / Spotlight Tarzı Odaklanmış Arama Çubuğu */}
+        <div className={`relative flex items-center w-full rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 focus-within:border-white/35 backdrop-blur-2xl transition-all shadow-xl shadow-black/40 group p-1.5 ${engineMenuOpen ? 'z-50' : 'z-20'}`}>
+          {/* Kompakt Motor Seçici Açılır Menüsü */}
+          <div className="relative shrink-0 z-50" ref={engineMenuRef}>
+            <button
+              type="button"
+              onClick={() => setEngineMenuOpen(!engineMenuOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white border border-white/[0.06] text-xs font-medium cursor-pointer transition-all"
+              title="Arama Motoru Seç"
+            >
+              <CurrentIcon size={13} className="text-white/70" />
+              <span className="hidden sm:inline">{currentEngineObj.label}</span>
+              <ChevronDown size={11} className={`text-white/40 transition-transform ${engineMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-        {/* Arama Giriş Alanı */}
-        <div className="flex items-center gap-3 w-full">
+            {engineMenuOpen && (
+              <div className="absolute left-0 top-full mt-2 w-56 rounded-2xl bg-[#0c0c0e] border border-white/20 backdrop-blur-3xl p-1.5 shadow-2xl shadow-black/95 z-[9999] animate-fadeIn">
+                <div className="px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider text-white/40 border-b border-white/[0.06] mb-1">
+                  Arama Motoru
+                </div>
+                {ENGINES.map((eng) => {
+                  const Icon = eng.icon;
+                  const isSelected = selectedEngine === eng.id;
+                  return (
+                    <button
+                      key={eng.id}
+                      onClick={() => handleSelectEngine(eng.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition-colors cursor-pointer text-left ${
+                        isSelected
+                          ? 'bg-white text-black font-semibold'
+                          : 'text-white/70 hover:text-white hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon size={13} className={isSelected ? 'text-black' : 'text-white/50'} />
+                        <span>{eng.label}</span>
+                      </div>
+                      <span className={`text-[10px] font-mono ${isSelected ? 'text-black/60' : 'text-white/30'}`}>
+                        {eng.id === 'google' ? 'Dork' : 'Canlı'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Ana Arama Giriş Inputu */}
           <input
             type="text"
             value={target}
@@ -144,125 +168,132 @@ export default function Hero({
             onBlur={onTargetBlur}
             onKeyDown={(e) => e.key === 'Enter' && onGenerate()}
             placeholder={
-              selectedEngine === 'crtsh' ? "Alt alan adı taranacak hedef (örn: target.com)" :
-                selectedEngine === 'wayback' ? "Geçmiş arşiv taranacak hedef (örn: target.com)" :
-                  selectedEngine === 'github' ? "GitHub sızıntısı için aranacak hedef / repo" :
-                    selectedEngine === 'shodan' ? "Shodan için hedef domain veya IP" :
-                      selectedEngine === 'censys' ? "Censys için hedef domain" :
-                        selectedEngine === 'jsminer' ? "JS analizi yapılacak hedef (örn: target.com)" :
-                          selectedEngine === 'dnsmap' ? "DNS & Komşu Siteler için hedef (örn: target.com)" :
-                            "Hedef alan adı (örn: target.com)"
+              selectedEngine === 'github' ? "GitHub sızıntı hedefi (örn: target.com)" :
+              selectedEngine === 'shodan' ? "Shodan için hedef alan adı veya IP" :
+              selectedEngine === 'censys' ? "Censys için hedef alan adı" :
+              "Hedef alan adı (örn: target.com)"
             }
-            className="search-input search-input-hero"
+            className="flex-1 bg-transparent border-none outline-none text-white placeholder-white/30 text-sm px-3 py-1 font-mono tracking-tight"
             autoFocus
           />
-          <button onClick={() => onGenerate()} className="btn-generate btn-generate-hero">
-            <Search size={14} />
-            <span>
-              {selectedEngine === 'crtsh' || selectedEngine === 'wayback' || selectedEngine === 'jsminer' || selectedEngine === 'dnsmap' ? 'Keşfet' : 'Keşfet'}
-            </span>
-          </button>
-        </div>
 
-        {/* Kategori Filtre Hapları (Temiz, sarıp sarmalayan, kaydırma çubuğu olmayan yapı) */}
-        <div className="filter-bar-hero">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => onFilterChange(cat)}
-              className={`filter-btn filter-btn-hero ${selectedFilter === cat ? 'filter-btn-active' : 'filter-btn-inactive'
-                }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Hızlı Aksiyon & Yönetim Çubuğu (Kategorilerden bağımsız, tam hizalı ve dengeli) */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 mt-2 pt-1 w-full max-w-2xl">
-          {/* DNS & Reverse IP Ağ Haritası Butonu */}
-          {onOpenDNSMap && (
-            <button
-              onClick={onOpenDNSMap}
-              className="px-3.5 py-1.5 rounded-full border border-cyan-500/25 text-xs text-cyan-300 hover:text-cyan-200 hover:border-cyan-500/50 bg-cyan-500/[0.04] hover:bg-cyan-500/[0.1] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm shadow-sm"
-              title="DNS Kayıtları ve Aynı Sunucudaki Komşu Siteler Haritası"
-            >
-              <Network size={12} className="text-cyan-400" />
-              <span>Ağ Haritası</span>
-            </button>
-          )}
-
-          {/* JS Secret Miner Butonu */}
-          {onOpenJSAnalysis && (
-            <button
-              onClick={onOpenJSAnalysis}
-              className="px-3.5 py-1.5 rounded-full border border-amber-500/25 text-xs text-amber-300 hover:text-amber-200 hover:border-amber-500/50 bg-amber-500/[0.04] hover:bg-amber-500/[0.1] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
-              title="JavaScript Dosyalarından Gizli API ve Secret Tara"
-            >
-              <Code2 size={12} className="text-amber-400" />
-              <span>JS Miner</span>
-            </button>
-          )}
-
-          {/* CTI & Pentest Yönetici Raporu Butonu */}
-          {onOpenReport && (
-            <button
-              onClick={onOpenReport}
-              className="px-3.5 py-1.5 rounded-full border border-white/20 text-xs text-white/80 hover:text-white hover:border-white/40 bg-white/[0.04] hover:bg-white/[0.08] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm shadow-sm"
-              title="CTI & Pentest Yönetici Raporu Oluştur (PDF / HTML)"
-            >
-              <FileText size={12} className="text-white/70" />
-              <span>Rapor Al</span>
-            </button>
-          )}
-
-          {/* Özel Dork Ekleme Butonu */}
+          {/* Keşfet Butonu */}
           <button
-            onClick={onOpenAddModal}
-            className="px-3.5 py-1.5 rounded-full border border-dashed border-white/20 text-xs text-white/70 hover:text-white hover:border-white/50 bg-white/[0.02] hover:bg-white/[0.06] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
-            title="Yeni özel dork şablonu ekle"
+            onClick={() => onGenerate()}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200 active:scale-95 transition-all cursor-pointer shrink-0 shadow-sm shadow-white/20"
           >
-            <Plus size={13} className="text-white/60" />
-            <span>Özel Dork</span>
+            <Search size={13} />
+            <span className="hidden sm:inline">Keşfet</span>
+          </button>
+        </div>
+
+        {/* Kategori Filtre Hapları (Sadeleştirilmiş ve Hafif) */}
+        {hasDorks && categories && categories.length > 0 && (
+          <div className="filter-bar-hero mt-3 relative z-10">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => onFilterChange(cat)}
+                className={`filter-btn filter-btn-hero ${
+                  selectedFilter === cat ? 'filter-btn-active' : 'filter-btn-inactive'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Konsolide Linear / Raycast Hızlı Komut Barı */}
+        <div className={`flex items-center justify-center gap-2 mt-3 pt-1 w-full relative ${moreMenuOpen ? 'z-40' : 'z-10'}`}>
+          {/* Merkezi İstihbarat & Keşif Merkezi */}
+          <button
+            onClick={() => onOpenReconHub && onOpenReconHub()}
+            className="px-3.5 py-1.5 rounded-xl border border-white/15 text-xs text-white hover:text-white hover:border-white/30 bg-white/[0.04] hover:bg-white/[0.08] transition-all flex items-center gap-2 cursor-pointer backdrop-blur-md shadow-sm group active:scale-95"
+            title="Tüm Canlı Keşif Araçları (Ağ Haritası, Shodan, Censys, GitHub, JS Miner, Arşiv)"
+          >
+            <Activity size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span className="font-medium">Keşif Merkezi</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </button>
 
-          {/* Dork & Kategori Yönetimi Butonu */}
+          {/* Dork & Şablon Stüdyosu */}
           <button
             onClick={onOpenManageModal}
-            className="px-3.5 py-1.5 rounded-full border border-white/10 text-xs text-white/60 hover:text-white hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.06] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
-            title="Dorkları ve kategorileri düzenle veya sil"
+            className="px-3 py-1.5 rounded-xl border border-white/[0.08] text-xs text-white/70 hover:text-white hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.06] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm active:scale-95"
+            title="Dork Şablonlarını İncele veya Yeni Dork Ekle"
           >
-            <SlidersHorizontal size={12} className="text-white/50" />
-            <span>Yönet</span>
+            <SlidersHorizontal size={12} className="text-white/60" />
+            <span>Dork Studio</span>
           </button>
 
-          {/* Bulgu Defteri & Kanıt Kasası Butonu */}
+          {/* Bulgu Defteri */}
           <button
             onClick={onOpenFindingsModal}
-            className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm ${findingsCount > 0
-              ? 'border-red-500/35 text-white/90 bg-red-500/15 hover:bg-red-500/25 hover:border-red-500/60'
-              : 'border-white/10 text-white/60 hover:text-white hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.06]'
-              }`}
-            title="Bulgu Defteri ve Kanıt Kasasını Görüntüle"
+            className={`px-3 py-1.5 rounded-xl border text-xs transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm active:scale-95 ${
+              findingsCount > 0
+                ? 'border-red-500/30 text-white bg-red-500/15 hover:bg-red-500/25 hover:border-red-500/50'
+                : 'border-white/[0.08] text-white/70 hover:text-white hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.06]'
+            }`}
+            title="Kayıtlı Bulgular ve Güvenlik Notları"
           >
             <Flag size={12} className={findingsCount > 0 ? "text-red-400 fill-red-400/40" : "text-white/50"} />
             <span>Bulgular</span>
             {findingsCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-red-500/40 text-red-200 border border-red-500/50">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-red-500/40 text-red-200">
                 {findingsCount}
               </span>
             )}
           </button>
 
-          {/* Ayarlar & API Kasası Butonu */}
-          <button
-            onClick={onOpenSettingsModal}
-            className="px-3.5 py-1.5 rounded-full border border-white/10 text-xs text-white/60 hover:text-white hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.06] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
-            title="Ayarlar ve API Anahtarları Kasası"
-          >
-            <Settings size={12} className="text-white/50" />
-            <span>Ayarlar</span>
-          </button>
+          {/* Daha Fazla `···` Menüsü (Rapor, Çalışma Alanı, Ayarlar) */}
+          <div className="relative z-40" ref={moreMenuRef}>
+            <button
+              type="button"
+              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+              className="p-1.5 px-2 rounded-xl border border-white/[0.08] text-white/60 hover:text-white hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.06] transition-all cursor-pointer backdrop-blur-sm active:scale-95"
+              title="Diğer Araçlar & Ayarlar"
+            >
+              <MoreHorizontal size={14} />
+            </button>
+
+            {moreMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-[#0c0c0e] border border-white/20 backdrop-blur-3xl p-1.5 shadow-2xl shadow-black/95 z-[9999] animate-fadeIn">
+                {onOpenReport && (
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      onOpenReport();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer text-left"
+                  >
+                    <FileText size={13} className="text-white/50" />
+                    <span>Yönetici Raporu</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setMoreMenuOpen(false);
+                    onOpenWorkspaceModal();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer text-left"
+                >
+                  <TargetIcon size={13} className="text-white/50" />
+                  <span>Çalışma Alanları</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMoreMenuOpen(false);
+                    onOpenSettingsModal();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer text-left border-t border-white/[0.06] mt-1 pt-2"
+                >
+                  <Settings size={13} className="text-white/50" />
+                  <span>Ayarlar & API Kasası</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </section>

@@ -34,6 +34,7 @@ type NetworkEdge struct {
 // DNSMapResult, hedefin DNS kayıtlarını, komşu sitelerini ve görsel topoloji verilerini içeren tam rapordur.
 type DNSMapResult struct {
 	Target          string               `json:"target"`          // Taranan hedef alan adı
+	ResolvedIP      string               `json:"resolvedIp"`      // Hedefe ait çözümlenen ana IPv4 adresi
 	Records         []DNSRecordItem      `json:"records"`         // Tüm çözümlenen DNS kayıtları
 	CoHostedDomains []CoHostedDomainItem `json:"coHostedDomains"` // Aynı sunucudaki komşu siteler
 	Nodes           []NetworkNode        `json:"nodes"`           // Topoloji haritası düğüm listesi

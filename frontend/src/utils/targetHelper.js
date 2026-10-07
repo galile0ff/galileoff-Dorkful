@@ -18,6 +18,9 @@ export function formatTargetDomain(input) {
   cleaned = cleaned.split('?')[0];
   cleaned = cleaned.split('#')[0];
 
+  // Port numarası varsa ayıkla (örn: domain.com:8080 -> domain.com)
+  cleaned = cleaned.replace(/:\d+$/, '');
+
   // Baştaki ve sondaki gereksiz karakterleri temizle
   cleaned = cleaned.trim();
 

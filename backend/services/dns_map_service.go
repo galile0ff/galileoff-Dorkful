@@ -51,6 +51,22 @@ func (s *DNSMapService) FetchDNSAndReverseIP(domain string) models.DNSMapResult 
 
 	// 1. A ve AAAA Kayıtları (IP Çözümleme)
 	var resolvedIPv4s []string
+
+	// Eğer hedef doğrudan bir IP adresi ise
+	if directIP := net.ParseIP(cleanTarget); directIP != nil {
+		recType := "A"
+		if directIP.To4() == nil {
+			recType = "AAAA"
+		} else {
+			resolvedIPv4s = append(resolvedIPv4s, directIP.String())
+		}
+		result.ResolvedIP = cleanTarget
+		result.Records = append(result.Records, models.DNSRecordItem{
+			Type:  recType,
+			Value: cleanTarget,
+		})
+	}
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -151,6 +167,28 @@ func (s *DNSMapService) FetchDNSAndReverseIP(domain string) models.DNSMapResult 
 	}()
 
 	wg.Wait()
+
+	// Eğer yerel DNS ile IPv4 çözümlenemezse, DoH (Cloudflare & Google DNS over HTTPS) ile çöz
+	if len(resolvedIPv4s) == 0 && cleanTarget != "" {
+		dohIPs := s.resolveDoHFallback(cleanTarget)
+		for _, ip := range dohIPs {
+			recType := "A"
+			if strings.Contains(ip, ":") {
+				recType = "AAAA"
+			} else {
+				resolvedIPv4s = append(resolvedIPv4s, ip)
+			}
+			result.Records = append(result.Records, models.DNSRecordItem{
+				Type:  recType,
+				Value: ip,
+			})
+		}
+	}
+
+	// Çözümlenen birincil IPv4 adresini kaydet
+	if len(resolvedIPv4s) > 0 {
+		result.ResolvedIP = resolvedIPv4s[0]
+	}
 
 	// 6. Reverse IP Lookup (Çözümlenen IPv4 adresleri üzerinden komşu siteleri tara)
 	coHostMap := make(map[string]models.CoHostedDomainItem)
@@ -497,4 +535,81 @@ func (s *DNSMapService) buildNetworkGraph(result *models.DNSMapResult, cleanTarg
 			Label:  "Komşu Sunucu",
 		})
 	}
+}
+
+// resolveDoHFallback, yerel DNS çözücü başarısız olursa Cloudflare ve Google DoH (DNS over HTTPS) üzerinden IP adresini sorgular.
+func (s *DNSMapService) resolveDoHFallback(cleanTarget string) []string {
+	var ips []string
+	seen := make(map[string]bool)
+
+	// 1. Cloudflare DoH (DNS over HTTPS) sorgusu
+	cfURL := fmt.Sprintf("https://cloudflare-dns.com/dns-query?name=%s&type=A", cleanTarget)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", cfURL, nil)
+	if err == nil {
+		req.Header.Set("Accept", "application/dns-json")
+		req.Header.Set("User-Agent", "Dorkful-CTI/2.0")
+		if resp, err := s.client.Do(req); err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				var dohRes struct {
+					Answer []struct {
+						Type int    `json:"type"` // 1 = A
+						Data string `json:"data"`
+					} `json:"Answer"`
+				}
+				if err := json.NewDecoder(resp.Body).Decode(&dohRes); err == nil {
+					for _, ans := range dohRes.Answer {
+						if ans.Type == 1 && ans.Data != "" {
+							cleanIP := strings.TrimSpace(ans.Data)
+							if net.ParseIP(cleanIP) != nil && !seen[cleanIP] {
+								seen[cleanIP] = true
+								ips = append(ips, cleanIP)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if len(ips) > 0 {
+		return ips
+	}
+
+	// 2. Google DoH yedek sorgusu
+	gURL := fmt.Sprintf("https://dns.google/resolve?name=%s&type=A", cleanTarget)
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel2()
+
+	req2, err := http.NewRequestWithContext(ctx2, "GET", gURL, nil)
+	if err == nil {
+		req2.Header.Set("User-Agent", "Dorkful-CTI/2.0")
+		if resp, err := s.client.Do(req2); err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				var dohRes struct {
+					Answer []struct {
+						Type int    `json:"type"` // 1 = A
+						Data string `json:"data"`
+					} `json:"Answer"`
+				}
+				if err := json.NewDecoder(resp.Body).Decode(&dohRes); err == nil {
+					for _, ans := range dohRes.Answer {
+						if ans.Type == 1 && ans.Data != "" {
+							cleanIP := strings.TrimSpace(ans.Data)
+							if net.ParseIP(cleanIP) != nil && !seen[cleanIP] {
+								seen[cleanIP] = true
+								ips = append(ips, cleanIP)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return ips
 }

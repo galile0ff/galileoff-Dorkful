@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Dorkful - Dork Üretici",
-  description: "Google Dork üreten masaüstü aracı.",
+  title: "Dorkful - galileoff",
+  description: "Detaylı Analiz Aracı",
 };
 
 export default function RootLayout({ children }) {

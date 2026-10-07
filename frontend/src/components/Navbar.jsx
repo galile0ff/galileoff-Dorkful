@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from 'react';
-import { Search, Download, Plus, SlidersHorizontal, Flag, Target, Settings, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { Search, Download, Plus, SlidersHorizontal, Flag, Target, Settings, ChevronLeft, ChevronRight, FileText, Globe, Activity } from 'lucide-react';
 
 // Sabit üst navigasyon çubuğu (Sticky Navbar)
 export default function Navbar({
@@ -22,7 +22,8 @@ export default function Navbar({
   findingsCount = 0,
   onOpenWorkspaceModal,
   onOpenSettingsModal,
-  onOpenReport
+  onOpenReport,
+  onOpenReconHub
 }) {
   const filterScrollRef = useRef(null);
 
@@ -108,46 +109,34 @@ export default function Navbar({
           </button>
         </div>
 
-        {/* Sağ Bölüm: Sabit Hizalı Aksiyon Butonları */}
-        <div className="nav-actions">
+        {/* Sağ Bölüm: Sadeleştirilmiş ve Hizalı Aksiyon Butonları */}
+        <div className="nav-actions flex items-center gap-1.5 shrink-0">
+          {/* Keşif Merkezi */}
           <button
-            onClick={onOpenWorkspaceModal}
-            className="btn-icon"
-            title="Hedef Çalışma Alanları (Target Workspaces)"
+            onClick={() => onOpenReconHub && onOpenReconHub()}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white border border-white/[0.08] text-xs font-medium transition-all cursor-pointer"
+            title="İstihbarat & Keşif Merkezi"
           >
-            <Target size={14} />
+            <Activity size={13} className="text-emerald-400" />
+            <span className="hidden md:inline">Keşif</span>
           </button>
 
-          <button
-            onClick={onOpenAddModal}
-            className="btn-icon"
-            title="Özel Dork Ekle"
-          >
-            <Plus size={14} />
-          </button>
-
+          {/* Dork Studio */}
           <button
             onClick={onOpenManageModal}
             className="btn-icon"
-            title="Dork ve Kategorileri Yönet"
+            title="Dork Studio (Şablonlar & Yeni Ekle)"
           >
-            <SlidersHorizontal size={14} />
+            <SlidersHorizontal size={13} />
           </button>
 
-          <button
-            onClick={onOpenSettingsModal}
-            className="btn-icon"
-            title="Ayarlar & API Kasası"
-          >
-            <Settings size={14} />
-          </button>
-
+          {/* Bulgu Defteri */}
           <button
             onClick={onOpenFindingsModal}
             className="btn-icon relative"
-            title="Bulgu Defteri ve Kanıt Kasası"
+            title="Bulgu Defteri"
           >
-            <Flag size={14} className={findingsCount > 0 ? "text-red-400 fill-red-400/40" : ""} />
+            <Flag size={13} className={findingsCount > 0 ? "text-red-400 fill-red-400/40" : ""} />
             {findingsCount > 0 && (
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-[9px] font-mono font-bold text-white flex items-center justify-center shadow-sm">
                 {findingsCount}
@@ -155,19 +144,19 @@ export default function Navbar({
             )}
           </button>
 
-          {onOpenReport && (
-            <button
-              onClick={onOpenReport}
-              className="btn-icon"
-              title="CTI & Pentest Yönetici Raporu (PDF / HTML)"
-            >
-              <FileText size={14} />
-            </button>
-          )}
+          {/* Ayarlar */}
+          <button
+            onClick={onOpenSettingsModal}
+            className="btn-icon"
+            title="Ayarlar & API Kasası"
+          >
+            <Settings size={13} />
+          </button>
 
+          {/* Dışa Aktar */}
           {hasDorks && (
-            <button onClick={onExport} className="btn-icon" title="Dışa Aktar">
-              <Download size={14} />
+            <button onClick={onExport} className="btn-icon" title="JSON Olarak Dışa Aktar">
+              <Download size={13} />
             </button>
           )}
         </div>

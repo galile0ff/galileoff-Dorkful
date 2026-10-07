@@ -211,19 +211,61 @@
 
   /* Modal Sistem Stilleri */
   .modal-overlay {
-    @apply fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6
-           bg-black/80 backdrop-blur-md;
+    @apply fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5
+           bg-black/80 backdrop-blur-xl;
   }
   .modal-container {
-    @apply relative w-full bg-neutral-950 border border-white/15 rounded-2xl
-           flex flex-col shadow-2xl text-white shadow-white/5 overflow-hidden;
+    @apply relative w-full bg-[#0a0a0c]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl sm:rounded-3xl
+           flex flex-col shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.08)] text-white overflow-hidden;
+  }
+
+  /* Raycast / Linear / Vercel Tasarım Sistemi Standartları */
+  .glass-panel {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)];
+  }
+
+  .glass-btn-primary {
+    @apply px-3.5 py-1.5 rounded-xl bg-white text-black font-medium text-xs
+           hover:bg-neutral-200 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5
+           cursor-pointer shadow-sm shadow-white/20 select-none;
+  }
+
+  .glass-btn-secondary {
+    @apply px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white
+           border border-white/[0.08] hover:border-white/20 active:scale-[0.98] transition-all
+           flex items-center justify-center gap-1.5 text-xs cursor-pointer select-none;
+  }
+
+  .glass-btn-ghost {
+    @apply px-2.5 py-1.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06]
+           transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer select-none;
+  }
+
+  .glass-input {
+    @apply bg-white/[0.03] border border-white/[0.08] hover:border-white/15 focus:border-white/30
+           focus:ring-1 focus:ring-white/20 text-white placeholder-white/30 rounded-xl px-3 py-2 text-xs
+           transition-all outline-none;
+  }
+
+  .glass-tab-btn {
+    @apply px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5
+           cursor-pointer select-none backdrop-blur-md;
+  }
+
+  .glass-tab-btn-active {
+    @apply bg-white text-black font-semibold shadow-sm shadow-white/20 border border-white;
+  }
+
+  .glass-tab-btn-inactive {
+    @apply bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/[0.06] border border-white/[0.06];
   }
 
   /* Toast */
   .toast {
-    @apply fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3
-           bg-white/10 backdrop-blur-2xl border border-white/20
-           text-white rounded-full text-xs font-semibold tracking-widest z-50;
+    @apply fixed top-5 left-1/2 -translate-x-1/2 px-5 py-2.5
+           bg-[#0c0d10]/90 backdrop-blur-2xl border border-white/15
+           text-white rounded-full text-xs font-medium tracking-wide z-50
+           shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.1)];
   }
 
   /* Boş ekran */
@@ -411,6 +453,83 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ============================================================
+   CANLI CAM EFEKTİ & AMBIENT AURORA HALELERİ
+   Linear / Vercel / Raycast tarzı dinamik ışık süzülmeleri
+   ============================================================ */
+@keyframes haloFloat1 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(80px, -60px, 0) scale(1.15) rotate(40deg);
+  }
+  66% {
+    transform: translate3d(-50px, 70px, 0) scale(0.9) rotate(80deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes haloFloat2 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(-90px, 50px, 0) scale(1.1) rotate(-35deg);
+  }
+  66% {
+    transform: translate3d(60px, -80px, 0) scale(0.95) rotate(-70deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes haloFloat3 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  50% {
+    transform: translate3d(70px, 60px, 0) scale(1.2);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+}
+
+@keyframes haloPulseCenter {
+  0%, 100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+.animate-halo-1 {
+  animation: haloFloat1 24s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-halo-2 {
+  animation: haloFloat2 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-halo-3 {
+  animation: haloFloat3 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-halo-center {
+  animation: haloPulseCenter 16s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 /* ============================================================

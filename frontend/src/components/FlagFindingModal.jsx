@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, ShieldAlert, Flag, Link as LinkIcon, FileText, CheckCircle2, Shield } from 'lucide-react';
+import { ShieldAlert, Flag, Link as LinkIcon, FileText, CheckCircle2, Shield } from 'lucide-react';
+import ModalShell from './ModalShell';
 
 // Risk seviyeleri tanımları
 const SEVERITIES = [
@@ -24,20 +25,17 @@ export default function FlagFindingModal({
   const [mitreTechniqueId, setMitreTechniqueId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Modal açıldığında varsayılan değerleri hazırla
   useEffect(() => {
     if (isOpen && dork) {
       setSeverity(dork.severity || 'High');
       setNotes(dork.notes || '');
       setMitreTechniqueId(dork.mitre ? dork.mitre.techniqueId : (dork.mitreTechniqueId || 'T1593.002'));
 
-      // 1. Doğrudan bulunan gerçek kanıt linki (GitHub sızıntı dosyası, Shodan/Censys host linki vb.)
       const directEvidence = dork.evidenceUrl || dork.evidenceURL || dork.htmlUrl || dork.snapshotUrl || dork.url || '';
 
       if (directEvidence && directEvidence.trim()) {
         setEvidenceUrl(directEvidence.trim());
       } else {
-        // 2. Dork içindeki inurl: değerini tespit edip hedef üzerinde olası kanıt linki öner
         let suggestedURL = target || '';
         if (suggestedURL && !suggestedURL.startsWith('http')) {
           suggestedURL = `https://${suggestedURL}`;
@@ -82,54 +80,35 @@ export default function FlagFindingModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-fadeIn"
-      onClick={onClose}
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Bulgu Olarak İşaretle"
+      subtitle="Tespit edilen güvenlik kanıtını CTI defterine kaydedin"
+      icon={Flag}
+      maxWidth="max-w-lg"
+      badge="Kanıt Kaydı"
     >
-      <div
-        className="relative w-full max-w-lg bg-[#0b0b0e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 shadow-2xl text-white shadow-black/90"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Başlık Alanı */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white">
-              <Flag size={18} />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white tracking-tight silver-glow">
-                Bulgu Olarak İşaretle
-              </h3>
-              <p className="text-xs text-white/50">Tespit edilen güvenlik kanıtını CTI defterine kaydet</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-white/40 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
+      <div className="p-5 sm:p-6 space-y-4">
         {/* İlgili Dork ve Hedef Bilgisi */}
-        <div className="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-1.5">
+        <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1.5">
           <div className="flex items-center justify-between text-xs text-white/40">
             <span className="font-mono">Hedef: <strong className="text-white/80">{target}</strong></span>
             <div className="flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded bg-white/5 text-[11px] font-mono text-white/60">{dork.category}</span>
+              <span className="px-2 py-0.5 rounded-md bg-white/5 text-[10px] font-mono text-white/60">{dork.category}</span>
               {dork.mitre && (
-                <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 text-[10px] font-mono border border-red-500/20">
+                <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 text-[10px] font-mono border border-red-500/20">
                   {dork.mitre.techniqueId}
                 </span>
               )}
             </div>
           </div>
-          <p className="text-xs font-mono text-white/70 truncate bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+          <p className="text-xs font-mono text-white/70 truncate bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/5">
             {dork.query}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* MITRE ATT&CK Çerçeve Eşlemesi */}
           <div>
             <label className="block text-xs font-medium text-white/70 mb-1.5 flex items-center justify-between">
@@ -142,7 +121,7 @@ export default function FlagFindingModal({
             <select
               value={mitreTechniqueId}
               onChange={(e) => setMitreTechniqueId(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 font-mono"
+              className="glass-input w-full font-mono text-xs"
             >
               <option value="T1593.002" className="bg-neutral-900 text-white">T1593.002 - Search Engines (Reconnaissance)</option>
               <option value="T1552.001" className="bg-neutral-900 text-white">T1552.001 - Credentials In Files (Credential Access)</option>
@@ -166,7 +145,7 @@ export default function FlagFindingModal({
                     key={s.id}
                     type="button"
                     onClick={() => setSeverity(s.id)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex flex-col items-center gap-1 cursor-pointer select-none ${
                       isSelected
                         ? `${s.color} border-current ring-1 ring-white/20`
                         : 'bg-white/[0.02] border-white/10 text-white/50 hover:bg-white/[0.06] hover:text-white/80'
@@ -193,7 +172,7 @@ export default function FlagFindingModal({
               value={evidenceUrl}
               onChange={(e) => setEvidenceUrl(e.target.value)}
               placeholder="https://target.com/.env veya admin login linki..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-white/25 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 font-mono"
+              className="glass-input w-full font-mono text-xs"
             />
           </div>
 
@@ -208,30 +187,30 @@ export default function FlagFindingModal({
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Örn: Açık dizin listelemesinde AWS_SECRET_KEY ve veritabanı şifreleri bulundu..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-white/25 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 resize-none"
+              className="glass-input w-full resize-none text-xs"
             />
           </div>
 
           {/* Alt Butonlar */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.08]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              className="glass-btn-secondary"
             >
               İptal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-white text-black hover:bg-neutral-200 shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+              className="glass-btn-primary"
             >
-              <CheckCircle2 size={14} />
-              <span>{isSubmitting ? 'Kaydediliyor...' : 'Bulguyu Kaydet'}</span>
+              <CheckCircle2 size={13} />
+              <span>{isSubmitting ? 'Kaydediliyor...' : 'Bulguya Ekle'}</span>
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </ModalShell>
   );
 }

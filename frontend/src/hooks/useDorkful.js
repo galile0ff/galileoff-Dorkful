@@ -411,22 +411,13 @@ export function useDorkful() {
       try {
         const res = await GenerateMultiEngineDorks("github", targetProfile);
         setDorks(res || []);
+        showToast(`${res ? res.length : 0} GitHub dorku listelendi.`);
 
-        // Eğer kullanıcı GitHub Token girmişse canlı API taramasını başlat
+        // Eğer kullanıcı GitHub Token girmişse canlı sızıntıları arka planda hazırla (modalı otomatik açma)
         if (settings?.githubToken && settings.githubToken.trim()) {
-          setIsGitHubModalOpen(true);
-          setIsGitHubLoading(true);
-          try {
-            const leaks = await SearchGitHubLeaks(formatted, targetProfile.githubOrg || "");
-            setGithubLeaks(leaks || []);
-            showToast(`${leaks ? leaks.length : 0} canlı sızıntı ve ${res ? res.length : 0} derin dork hazırlandı.`);
-          } catch (err) {
-            showToast(`GitHub canlı arama hatası: ${err}`);
-          } finally {
-            setIsGitHubLoading(false);
-          }
-        } else {
-          showToast(`${res ? res.length : 0} Github sorgusu oluşturuldu. (Canlı sızıntı taraması için Ayarlar'dan Token ekleyebilirsiniz)`);
+          SearchGitHubLeaks(formatted, targetProfile.githubOrg || "").then((leaks) => {
+            if (leaks) setGithubLeaks(leaks);
+          }).catch(() => {});
         }
       } catch (e) {
         showToast(`Github sorgu hatası: ${e}`);
@@ -448,21 +439,12 @@ export function useDorkful() {
       try {
         const res = await GenerateMultiEngineDorks("shodan", targetProfile);
         setDorks(res || []);
+        showToast(`${res ? res.length : 0} Shodan dorku listelendi.`);
 
-        // Shodan canlı port ve zafiyet taramasını başlat (Key varsa API, yoksa InternetDB)
-        setIsShodanModalOpen(true);
-        setIsShodanLoading(true);
-        try {
-          const hosts = await SearchShodanHost(formatted);
-          setShodanHosts(hosts || []);
-          const portCount = (hosts || []).reduce((acc, h) => acc + (h.ports ? h.ports.length : 0), 0);
-          const isKeyless = hosts && hosts[0] && hosts[0].isKeyless;
-          showToast(`${res ? res.length : 0} Shodan dorku ve ${portCount} açık port tespit edildi (${isKeyless ? 'InternetDB' : 'Shodan API'}).`);
-        } catch (shodanErr) {
-          showToast(`Shodan canlı tarama uyarısı: ${shodanErr}`);
-        } finally {
-          setIsShodanLoading(false);
-        }
+        // Shodan canlı port verilerini arka planda hazırla (modalı otomatik açma)
+        SearchShodanHost(formatted).then((hosts) => {
+          if (hosts) setShodanHosts(hosts);
+        }).catch(() => {});
       } catch (e) {
         showToast(`Shodan sorgu hatası: ${e}`);
       }
@@ -483,22 +465,13 @@ export function useDorkful() {
       try {
         const res = await GenerateMultiEngineDorks("censys", targetProfile);
         setDorks(res || []);
+        showToast(`${res ? res.length : 0} Censys dorku listelendi.`);
 
-        // Eğer kullanıcı Censys API Token veya ID/Secret girmişse canlı arama yap
+        // Censys host verilerini arka planda hazırla (modalı otomatik açma)
         if ((settings?.censysId && settings.censysId.trim()) || (settings?.censysSecret && settings.censysSecret.trim())) {
-          setIsCensysModalOpen(true);
-          setIsCensysLoading(true);
-          try {
-            const cHosts = await SearchCensysHosts(formatted);
-            setCensysHosts(cHosts || []);
-            showToast(`${cHosts ? cHosts.length : 0} canlı Censys hostu ve ${res ? res.length : 0} Censys dorku hazırlandı.`);
-          } catch (cErr) {
-            showToast(`Censys canlı tarama uyarısı: ${cErr}`);
-          } finally {
-            setIsCensysLoading(false);
-          }
-        } else {
-          showToast(`${res ? res.length : 0} Censys sorgusu oluşturuldu. (Canlı host keşfi için Ayarlar'dan API Token ekleyebilirsiniz)`);
+          SearchCensysHosts(formatted).then((cHosts) => {
+            if (cHosts) setCensysHosts(cHosts);
+          }).catch(() => {});
         }
       } catch (e) {
         showToast(`Censys sorgu hatası: ${e}`);
@@ -528,9 +501,10 @@ export function useDorkful() {
   }, [target, selectedEngine, activeWorkspace, settings, runProbeTarget, handleScanJavaScript, handleScanDNSMap, showToast]);
 
   // Manuel GitHub canlı sızıntı taraması tetikleme
-  const handleScanGitHubLeaks = useCallback(async () => {
-    if (!target.trim()) return;
-    const formatted = formatTargetDomain(target);
+  const handleScanGitHubLeaks = useCallback(async (customTarget) => {
+    const raw = customTarget || target;
+    if (!raw || !raw.trim()) return;
+    const formatted = formatTargetDomain(raw);
     const org = activeWorkspace?.githubOrg || formatted.split('.')[0] || "";
     setIsGitHubModalOpen(true);
     setIsGitHubLoading(true);
@@ -546,9 +520,10 @@ export function useDorkful() {
   }, [target, activeWorkspace, showToast]);
 
   // Manuel Shodan canlı taraması tetikleme
-  const handleScanShodan = useCallback(async () => {
-    if (!target.trim()) return;
-    const formatted = formatTargetDomain(target);
+  const handleScanShodan = useCallback(async (customTarget) => {
+    const raw = customTarget || target;
+    if (!raw || !raw.trim()) return;
+    const formatted = formatTargetDomain(raw);
     setIsShodanModalOpen(true);
     setIsShodanLoading(true);
     try {
@@ -564,9 +539,10 @@ export function useDorkful() {
   }, [target, showToast]);
 
   // Manuel Censys canlı taraması tetikleme
-  const handleScanCensys = useCallback(async () => {
-    if (!target.trim()) return;
-    const formatted = formatTargetDomain(target);
+  const handleScanCensys = useCallback(async (customTarget) => {
+    const raw = customTarget || target;
+    if (!raw || !raw.trim()) return;
+    const formatted = formatTargetDomain(raw);
     setIsCensysModalOpen(true);
     setIsCensysLoading(true);
     try {
@@ -577,6 +553,46 @@ export function useDorkful() {
       showToast(`Censys tarama hatası: ${e}`);
     } finally {
       setIsCensysLoading(false);
+    }
+  }, [target, showToast]);
+
+  // Manuel CRT.sh alt alan adı keşfi tetikleme
+  const handleScanCRT = useCallback(async (customTarget) => {
+    const raw = customTarget || target;
+    if (!raw || !raw.trim()) return;
+    const formatted = formatTargetDomain(raw);
+    setReconType('crtsh');
+    setReconTarget(formatted);
+    setIsReconModalOpen(true);
+    setIsReconLoading(true);
+    try {
+      const res = await FetchSubdomains(formatted);
+      setSubdomains(res || []);
+      showToast(`${res ? res.length : 0} alt alan adı tespit edildi.`);
+    } catch (e) {
+      showToast(`CRT.sh hatası: ${e}`);
+    } finally {
+      setIsReconLoading(false);
+    }
+  }, [target, showToast]);
+
+  // Manuel Wayback Machine arşiv URL keşfi tetikleme
+  const handleScanWayback = useCallback(async (customTarget) => {
+    const raw = customTarget || target;
+    if (!raw || !raw.trim()) return;
+    const formatted = formatTargetDomain(raw);
+    setReconType('wayback');
+    setReconTarget(formatted);
+    setIsReconModalOpen(true);
+    setIsReconLoading(true);
+    try {
+      const res = await FetchWaybackURLs(formatted);
+      setWaybackUrls(res || []);
+      showToast(`${res ? res.length : 0} tarihi URL tespit edildi.`);
+    } catch (e) {
+      showToast(`Wayback hatası: ${e}`);
+    } finally {
+      setIsReconLoading(false);
     }
   }, [target, showToast]);
 
@@ -932,6 +948,8 @@ export function useDorkful() {
     subdomains,
     waybackUrls,
     isReconLoading,
+    handleScanCRT,
+    handleScanWayback,
     // Ayarlar & API Kasası State/Aksiyonları
     settings,
     setSettings,

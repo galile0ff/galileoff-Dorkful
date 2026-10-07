@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import './globals.css';
 import { useDorkful } from '../hooks/useDorkful';
 import SplashScreen from '../components/SplashScreen';
@@ -7,20 +8,15 @@ import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import DorkList from '../components/DorkList';
 import Toast from '../components/Toast';
-import AddDorkModal from '../components/AddDorkModal';
 import ManageDorksModal from '../components/ManageDorksModal';
 import TargetProbeCard from '../components/TargetProbeCard';
 import FlagFindingModal from '../components/FlagFindingModal';
 import FindingsLockerModal from '../components/FindingsLockerModal';
 import WorkspaceModal from '../components/WorkspaceModal';
-import ReconResultsModal from '../components/ReconResultsModal';
 import SettingsModal from '../components/SettingsModal';
-import GitHubLeaksModal from '../components/GitHubLeaksModal';
-import ShodanResultsModal from '../components/ShodanResultsModal';
-import CensysResultsModal from '../components/CensysResultsModal';
-import JSAnalysisModal from '../components/JSAnalysisModal';
-import DNSNetworkMapModal from '../components/DNSNetworkMapModal';
 import ExecutiveReportModal from '../components/ExecutiveReportModal';
+import ReconHubModal from '../components/ReconHubModal';
+import AmbientBackground from '../components/AmbientBackground';
 
 export default function Home() {
   const {
@@ -90,6 +86,8 @@ export default function Home() {
     subdomains,
     waybackUrls,
     isReconLoading,
+    handleScanCRT,
+    handleScanWayback,
     // Ayarlar & API Kasası
     settings,
     isSettingsModalOpen,
@@ -134,6 +132,52 @@ export default function Home() {
     setIsReportModalOpen,
   } = useDorkful();
 
+  // Merkezi İstihbarat & Keşif Hub State'i
+  const [isReconHubOpen, setIsReconHubOpen] = useState(false);
+  const [reconHubTab, setReconHubTab] = useState('dnsmap');
+
+  const openReconHub = (tab = 'dnsmap') => {
+    setReconHubTab(tab);
+    setIsReconHubOpen(true);
+  };
+
+  // 6 Keşif modalını tek bir merkez altında konsolide etme
+  const isAnyReconOpen =
+    isReconHubOpen ||
+    isDNSMapModalOpen ||
+    isShodanModalOpen ||
+    isCensysModalOpen ||
+    isGitHubModalOpen ||
+    isJSAnalysisModalOpen ||
+    isReconModalOpen;
+
+  const currentReconTab =
+    isDNSMapModalOpen ? 'dnsmap' :
+    isShodanModalOpen ? 'shodan' :
+    isCensysModalOpen ? 'censys' :
+    isGitHubModalOpen ? 'github' :
+    isJSAnalysisModalOpen ? 'jsminer' :
+    isReconModalOpen ? 'archive' :
+    reconHubTab;
+
+  const handleCloseReconHub = () => {
+    setIsReconHubOpen(false);
+    setIsDNSMapModalOpen(false);
+    setIsShodanModalOpen(false);
+    setIsCensysModalOpen(false);
+    setIsGitHubModalOpen(false);
+    setIsJSAnalysisModalOpen(false);
+    setIsReconModalOpen(false);
+  };
+
+  // Dork Yönetim ve Ekleme modallarını konsolide etme
+  const isAnyDorkModalOpen = isManageModalOpen || isAddModalOpen;
+  const initialDorkTab = isAddModalOpen ? 'add' : 'dorks';
+  const handleCloseDorkModals = () => {
+    setIsManageModalOpen(false);
+    setIsAddModalOpen(false);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black text-white">
       {/* Açılış Karşılama Ekranı */}
@@ -142,18 +186,11 @@ export default function Home() {
         onDismiss={() => setSplashDone(true)}
       />
 
-      {/* Özel Dork Ekleme Modalı */}
-      <AddDorkModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAddDork={handleAddCustomDork}
-        categories={categories}
-      />
-
-      {/* Dork & Kategori Yönetimi Modalı */}
+      {/* Konsolide Dork & Şablon Stüdyosu (Ekle & Yönet) */}
       <ManageDorksModal
-        isOpen={isManageModalOpen}
-        onClose={() => setIsManageModalOpen(false)}
+        isOpen={isAnyDorkModalOpen}
+        initialTab={initialDorkTab}
+        onClose={handleCloseDorkModals}
         templates={templates}
         categories={categories}
         onAddDork={handleAddCustomDork}
@@ -162,12 +199,59 @@ export default function Home() {
         onRenameCategory={handleRenameCategory}
         onDeleteCategory={handleDeleteCategory}
         onResetToDefaults={handleResetToDefaults}
-        onOpenAddModal={() => {
-          setIsManageModalOpen(false);
-          setIsAddModalOpen(true);
-        }}
       />
 
+      {/* Merkezi İstihbarat & Keşif Merkezi (Ağ Haritası, Shodan, Censys, GitHub, JS Miner, CRT.sh/Wayback) */}
+      <ReconHubModal
+        isOpen={isAnyReconOpen}
+        onClose={handleCloseReconHub}
+        initialTab={currentReconTab}
+        target={target}
+        onSelectNewTarget={(newTarget) => {
+          setTarget(newTarget);
+          handleScanDNSMap(newTarget);
+        }}
+        // DNS Map
+        dnsMapResult={dnsMapResult}
+        isDNSMapLoading={isDNSMapLoading}
+        onRefreshDNSMap={handleScanDNSMap}
+        // Shodan
+        shodanHosts={shodanHosts}
+        isShodanLoading={isShodanLoading}
+        onRefreshShodan={handleScanShodan}
+        // Censys
+        censysHosts={censysHosts}
+        isCensysLoading={isCensysLoading}
+        onRefreshCensys={handleScanCensys}
+        // GitHub
+        githubLeaks={githubLeaks}
+        isGitHubLoading={isGitHubLoading}
+        onRefreshGitHub={handleScanGitHubLeaks}
+        // JS Miner
+        jsAnalysisResult={jsAnalysisResult}
+        isJSAnalysisLoading={isJSAnalysisLoading}
+        onRefreshJS={handleScanJavaScript}
+        // CRT.sh & Wayback
+        subdomains={subdomains}
+        waybackUrls={waybackUrls}
+        isReconLoading={isReconLoading}
+        reconType={reconType}
+        onRefreshCRT={handleScanCRT}
+        onRefreshWayback={handleScanWayback}
+        // Bulgular & Ayarlar
+        onFlagAsFinding={(finding) => {
+          openFlagModal({
+            query: finding.query || target,
+            description: finding.description,
+            category: finding.category || "Security Finding",
+            evidenceUrl: finding.evidenceUrl || finding.evidenceURL || target,
+            evidenceURL: finding.evidenceUrl || finding.evidenceURL || target,
+            severity: finding.severity || "Medium",
+            notes: finding.notes || ""
+          });
+        }}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+      />
 
       {/* Bulgu Defteri & Kanıt Kasası (Findings Locker) Modalı */}
       <FindingsLockerModal
@@ -192,17 +276,6 @@ export default function Home() {
         onDeleteWorkspace={handleDeleteWorkspace}
       />
 
-      {/* Canlı Keşif Sonuçları (CRT.sh & Wayback Machine) Modalı */}
-      <ReconResultsModal
-        isOpen={isReconModalOpen}
-        onClose={() => setIsReconModalOpen(false)}
-        type={reconType}
-        target={reconTarget}
-        subdomains={subdomains}
-        waybackUrls={waybackUrls}
-        isLoading={isReconLoading}
-      />
-
       {/* Ayarlar & API Kasası Modalı */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
@@ -221,109 +294,6 @@ export default function Home() {
         onShowToast={showToast}
       />
 
-      {/* Canlı GitHub Sızıntı Keşfi Modalı */}
-      <GitHubLeaksModal
-        isOpen={isGitHubModalOpen}
-        onClose={() => setIsGitHubModalOpen(false)}
-        target={target}
-        leaks={githubLeaks}
-        isLoading={isGitHubLoading}
-        onRefresh={handleScanGitHubLeaks}
-        onFlagAsFinding={(leak) => {
-          openFlagModal({
-            query: leak.query,
-            description: `${leak.description} - ${leak.repoName} (${leak.path})`,
-            category: "Secrets & Config",
-            evidenceUrl: leak.htmlUrl,
-            evidenceURL: leak.htmlUrl
-          });
-        }}
-      />
-
-      {/* Canlı Shodan Port & Zafiyet Analizi Modalı */}
-      <ShodanResultsModal
-        isOpen={isShodanModalOpen}
-        onClose={() => setIsShodanModalOpen(false)}
-        target={target}
-        hosts={shodanHosts}
-        isLoading={isShodanLoading}
-        onRefresh={handleScanShodan}
-        onFlagAsFinding={(finding) => {
-          openFlagModal({
-            query: finding.query,
-            description: finding.description,
-            category: finding.category || "Port & Vulnerability",
-            evidenceUrl: finding.evidenceUrl || finding.evidenceURL,
-            evidenceURL: finding.evidenceUrl || finding.evidenceURL
-          });
-        }}
-      />
-
-      {/* Canlı Censys Host & Servis Keşfi Modalı */}
-      <CensysResultsModal
-        isOpen={isCensysModalOpen}
-        onClose={() => setIsCensysModalOpen(false)}
-        target={target}
-        hosts={censysHosts}
-        isLoading={isCensysLoading}
-        onRefresh={handleScanCensys}
-        onFlagAsFinding={(finding) => {
-          openFlagModal({
-            query: finding.query,
-            description: finding.description,
-            category: finding.category || "Network & Infrastructure",
-            evidenceUrl: finding.evidenceUrl || finding.evidenceURL,
-            evidenceURL: finding.evidenceUrl || finding.evidenceURL
-          });
-        }}
-      />
-
-      {/* JavaScript Gizli API & Secret Avcısı (JS Secret Miner) Modalı */}
-      <JSAnalysisModal
-        isOpen={isJSAnalysisModalOpen}
-        onClose={() => setIsJSAnalysisModalOpen(false)}
-        target={target}
-        result={jsAnalysisResult}
-        isLoading={isJSAnalysisLoading}
-        onRefresh={() => handleScanJavaScript(target)}
-        onFlagAsFinding={(finding) => {
-          openFlagModal({
-            query: finding.query,
-            description: finding.description,
-            category: finding.category || "JS Secret Sızıntısı",
-            evidenceUrl: finding.evidenceUrl,
-            evidenceURL: finding.evidenceUrl,
-            severity: finding.severity || "High",
-            notes: finding.notes || ""
-          });
-        }}
-      />
-
-      {/* DNS & Reverse IP Ağ Haritası Modalı */}
-      <DNSNetworkMapModal
-        isOpen={isDNSMapModalOpen}
-        onClose={() => setIsDNSMapModalOpen(false)}
-        target={target}
-        result={dnsMapResult}
-        isLoading={isDNSMapLoading}
-        onRefresh={() => handleScanDNSMap(target)}
-        onSelectNewTarget={(newTarget) => {
-          setTarget(newTarget);
-          handleScanDNSMap(newTarget);
-        }}
-        onFlagAsFinding={(finding) => {
-          openFlagModal({
-            query: finding.query || target,
-            description: finding.description || "DNS & Reverse IP Altyapı Tespiti",
-            category: finding.category || "Network & Infrastructure",
-            evidenceUrl: finding.evidenceUrl || target,
-            evidenceURL: finding.evidenceUrl || target,
-            severity: finding.severity || "Medium",
-            notes: finding.notes || ""
-          });
-        }}
-      />
-
       {/* CTI & Pentest Yönetici Raporu Modalı */}
       <ExecutiveReportModal
         isOpen={isReportModalOpen}
@@ -339,7 +309,7 @@ export default function Home() {
         dnsMapResult={dnsMapResult}
       />
 
-      {/* Bulgu Olarak İşaretle (Flag as Finding) Modalı - Diğer tüm keşif modallarının en üstünde açılır */}
+      {/* Bulgu Olarak İşaretle (Flag as Finding) Modalı */}
       <FlagFindingModal
         isOpen={isFlagModalOpen}
         onClose={closeFlagModal}
@@ -348,16 +318,13 @@ export default function Home() {
         onSaveFinding={handleSaveFinding}
       />
 
-      {/* Arka plan ışık efektleri */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="blob blob-1" />
-        <div className="blob blob-2" />
-      </div>
+      {/* Dinamik Ambient Işık Haleleri ve Siber Doku Efekti */}
+      <AmbientBackground />
 
       {/* Toast Bildirimi */}
       <Toast message={toast} />
 
-      {/* Üst Navigasyon Çubuğu (Yalnızca sonuçlarda aşağı kaydırıldığında yukarıdan zarifçe iner) */}
+      {/* Üst Navigasyon Çubuğu */}
       <Navbar
         isVisible={navVisible}
         target={target}
@@ -370,13 +337,16 @@ export default function Home() {
         hasDorks={dorks.length > 0}
         onExport={handleExport}
         onLogoClick={scrollToTop}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
+        onOpenAddModal={() => {
+          setIsManageModalOpen(true);
+        }}
         onOpenManageModal={() => setIsManageModalOpen(true)}
         onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
         findingsCount={findings.length}
         onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onOpenReport={() => setIsReportModalOpen(true)}
+        onOpenReconHub={() => openReconHub('dnsmap')}
       />
 
       {/* Ana Kaydırma Alanı */}
@@ -399,7 +369,7 @@ export default function Home() {
           selectedFilter={filter}
           onFilterChange={setFilter}
           onLogoClick={() => setSplashDone(false)}
-          onOpenAddModal={() => setIsAddModalOpen(true)}
+          onOpenAddModal={() => setIsManageModalOpen(true)}
           onOpenManageModal={() => setIsManageModalOpen(true)}
           onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
           findingsCount={findings.length}
@@ -408,15 +378,16 @@ export default function Home() {
           activeWorkspace={activeWorkspace}
           onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
-          onOpenJSAnalysis={() => handleScanJavaScript(target)}
-          onOpenDNSMap={() => handleScanDNSMap(target)}
+          onOpenReconHub={() => openReconHub('dnsmap')}
+          onOpenJSAnalysis={() => openReconHub('jsminer')}
+          onOpenDNSMap={() => openReconHub('dnsmap')}
           onOpenReport={() => setIsReportModalOpen(true)}
           hasDorks={dorks.length > 0}
         />
 
-        {/* Canlı Hedef HTTP Denetim Kartı (Durum Kodu, Yanıt Süresi, Sunucu Başlığı, Teknoloji Parmak İzleri) */}
+        {/* Canlı Hedef HTTP Denetim Kartı */}
         {probeResult && (
-          <div className={`flex justify-center px-6 relative z-20 w-full ${dorks.length > 0 ? '-mt-2 mb-6' : 'mt-1 mb-2'}`}>
+          <div className={`flex justify-center px-6 relative z-20 w-full ${dorks.length > 0 ? '-mt-1 mb-5' : 'mt-1 mb-2'}`}>
             <TargetProbeCard
               probeResult={probeResult}
               isProbing={isProbing}
@@ -424,159 +395,6 @@ export default function Home() {
               selectedTechFilter={selectedTechFilter}
               onSelectTech={setSelectedTechFilter}
             />
-          </div>
-        )}
-
-        {/* GitHub Canlı Sızıntı Bilgi ve İnceleme Çubuğu */}
-        {selectedEngine === 'github' && (dorks || []).length > 0 && (
-          <div className="w-full max-w-3xl mx-auto px-6 mb-4 relative z-20">
-            {settings?.githubToken && settings.githubToken.trim() ? (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-lg shadow-black/40">
-                <div className="flex items-center gap-2.5 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-white/80">
-                    GitHub Token Aktif: <strong className="text-white font-mono">{(githubLeaks || []).length} adet</strong> canlı kod sızıntısı tespit edildi.
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIsGitHubModalOpen(true)}
-                  className="px-3 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-white/20 active:scale-95"
-                >
-                  <span>Sızıntıları Gör ({(githubLeaks || []).length})</span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/[0.04] border border-amber-500/20 backdrop-blur-xl">
-                <div className="flex items-center gap-2 text-xs text-amber-300/90">
-                  <span>Canlı GitHub sızıntı taraması (API) için ücretsiz Token ekleyebilirsiniz.</span>
-                </div>
-                <button
-                  onClick={() => setIsSettingsModalOpen(true)}
-                  className="px-3 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 text-xs transition-colors cursor-pointer border border-amber-500/30"
-                >
-                  Token Ekle
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Shodan Canlı Port & Zafiyet Bilgi ve İnceleme Çubuğu */}
-        {selectedEngine === 'shodan' && (dorks || []).length > 0 && (
-          <div className="w-full max-w-3xl mx-auto px-6 mb-4 relative z-20">
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-lg shadow-black/40">
-              <div className="flex items-center gap-2.5 text-xs">
-                <div className={`w-2 h-2 rounded-full ${(shodanHosts || []).length > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-white/40'}`} />
-                <span className="text-white/80">
-                  {settings?.shodanKey && settings.shodanKey.trim() ? (
-                    <>Shodan API Aktif: <strong className="text-white font-mono">{(shodanHosts || []).reduce((acc, h) => acc + (h.ports ? h.ports.length : 0), 0)} port</strong> ve <strong className="text-white font-mono">{(shodanHosts || []).reduce((acc, h) => acc + (h.vulns ? h.vulns.length : 0), 0)} CVE</strong> tespit edildi.</>
-                  ) : (
-                    <>Shodan InternetDB (Ücretsiz): <strong className="text-white font-mono">{(shodanHosts || []).reduce((acc, h) => acc + (h.ports ? h.ports.length : 0), 0)} port</strong> ve zafiyet verisi hazır.</>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {(!settings?.shodanKey || !settings.shodanKey.trim()) && (
-                  <button
-                    onClick={() => setIsSettingsModalOpen(true)}
-                    className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs transition-colors cursor-pointer border border-white/10"
-                    title="Resmi API Key Ekle"
-                  >
-                    Key Ekle
-                  </button>
-                )}
-                <button
-                  onClick={() => setIsShodanModalOpen(true)}
-                  className="px-3 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-white/20 active:scale-95"
-                >
-                  <span>Port & CVE Analizini Gör</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Censys Canlı Host & Servis Bilgi ve İnceleme Çubuğu */}
-        {selectedEngine === 'censys' && (dorks || []).length > 0 && (
-          <div className="w-full max-w-3xl mx-auto px-6 mb-4 relative z-20">
-            {(settings?.censysId && settings.censysId.trim()) || (settings?.censysSecret && settings.censysSecret.trim()) ? (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-lg shadow-black/40">
-                <div className="flex items-center gap-2.5 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="text-white/80">
-                    Censys API Aktif: <strong className="text-white font-mono">{(censysHosts || []).length} adet</strong> aktif ana bilgisayar keşfedildi.
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIsCensysModalOpen(true)}
-                  className="px-3 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-white/20 active:scale-95"
-                >
-                  <span>Hostları İncele ({(censysHosts || []).length})</span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-cyan-500/[0.04] border border-cyan-500/20 backdrop-blur-xl">
-                <div className="flex items-center gap-2 text-xs text-cyan-300/90">
-                  <span>Canlı Censys host taraması için Ayarlar'dan API Token ekleyebilirsiniz.</span>
-                </div>
-                <button
-                  onClick={() => setIsSettingsModalOpen(true)}
-                  className="px-3 py-1 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 text-xs transition-colors cursor-pointer border border-cyan-500/30"
-                >
-                  API Ekle
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* JS Secret Miner Canlı Bilgi ve İnceleme Çubuğu */}
-        {selectedEngine === 'jsminer' && (
-          <div className="w-full max-w-3xl mx-auto px-6 mb-4 relative z-20">
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-lg shadow-black/40">
-              <div className="flex items-center gap-2.5 text-xs">
-                <div className={`w-2 h-2 rounded-full ${jsAnalysisResult ? 'bg-amber-400 animate-pulse' : 'bg-white/40'}`} />
-                <span className="text-white/80">
-                  {jsAnalysisResult ? (
-                    <>JS Analizi Tamamlandı: <strong className="text-white font-mono">{jsAnalysisResult.scannedScripts || 0} dosya</strong>, <strong className="text-red-400 font-mono">{(jsAnalysisResult.secrets || []).length} secret</strong>, <strong className="text-cyan-400 font-mono">{(jsAnalysisResult.endpoints || []).length} dahili API rotası</strong>.</>
-                  ) : (
-                    <>Hedef web sayfasının JavaScript dosyalarındaki gizli API ve secret'ları tarayın.</>
-                  )}
-                </span>
-              </div>
-              <button
-                onClick={() => handleScanJavaScript(target)}
-                disabled={isJSAnalysisLoading}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-400 text-black font-semibold text-xs hover:bg-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-amber-400/20 active:scale-95 disabled:opacity-50"
-              >
-                <span>{isJSAnalysisLoading ? 'Taranıyor...' : 'Analiz Raporunu Aç'}</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* DNS & Reverse IP Ağ Haritası Bilgi ve İnceleme Çubuğu */}
-        {selectedEngine === 'dnsmap' && (
-          <div className="w-full max-w-3xl mx-auto px-6 mb-4 relative z-20">
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-lg shadow-black/40">
-              <div className="flex items-center gap-2.5 text-xs">
-                <div className={`w-2 h-2 rounded-full ${dnsMapResult ? 'bg-cyan-400 animate-pulse' : 'bg-white/40'}`} />
-                <span className="text-white/80">
-                  {dnsMapResult ? (
-                    <>Ağ Topolojisi Çıkarıldı: <strong className="text-white font-mono">{(dnsMapResult.records || []).length} DNS kaydı</strong>, <strong className="text-cyan-400 font-mono">{(dnsMapResult.coHostedDomains || []).length} komşu alan adı</strong>, <strong className="text-amber-400 font-mono">{(dnsMapResult.nodes || []).length} düğüm</strong>.</>
-                  ) : (
-                    <>Hedef alan adının DNS topolojisini ve aynı sunucudaki (Reverse IP) komşu siteleri haritalayın.</>
-                  )}
-                </span>
-              </div>
-              <button
-                onClick={() => handleScanDNSMap(target)}
-                disabled={isDNSMapLoading}
-                className="px-3.5 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-white/20 active:scale-95 disabled:opacity-50"
-              >
-                <span>{isDNSMapLoading ? 'Topoloji Çıkarılıyor...' : 'Ağ Haritasını Aç'}</span>
-              </button>
-            </div>
           </div>
         )}
 

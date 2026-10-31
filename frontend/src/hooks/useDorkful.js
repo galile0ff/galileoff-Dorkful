@@ -126,6 +126,9 @@ export function useDorkful() {
   // CTI & Pentest Yönetici Raporu (Executive Report) Modalı
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
+  // Kullanım Kılavuzu & Tutorial Modalı State'i
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
   // Aktif çalışma alanı nesnesi
   const activeWorkspace = useMemo(() => {
     return workspaces.find(w => w.id === activeWorkspaceId) || null;
@@ -154,6 +157,30 @@ export function useDorkful() {
 
   const closeManageModal = useCallback(() => {
     setIsManageModalOpen(false);
+  }, []);
+
+  const openTutorial = useCallback(() => {
+    setIsTutorialOpen(true);
+  }, []);
+
+  const closeTutorial = useCallback(() => {
+    setIsTutorialOpen(false);
+  }, []);
+
+  // Klavye kısayolu dinleyicisi (? veya F1 ile kullanım kılavuzunu açma)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Input veya metin giriş alanlarındaysa kısayolu yok say
+      if (['INPUT', 'TEXTAREA'].includes(e.target?.tagName) || e.target?.isContentEditable) {
+        return;
+      }
+      if (e.key === '?' || e.key === 'F1') {
+        e.preventDefault();
+        setIsTutorialOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Çalışma alanlarını yükleme
@@ -1018,5 +1045,10 @@ export function useDorkful() {
     // CTI & Pentest Yönetici Raporu (Executive Report)
     isReportModalOpen,
     setIsReportModalOpen,
+    // Kullanım Kılavuzu & Tutorial
+    isTutorialOpen,
+    setIsTutorialOpen,
+    openTutorial,
+    closeTutorial,
   };
 }

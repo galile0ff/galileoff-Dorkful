@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from 'react';
-import { Search, Download, Plus, SlidersHorizontal, Flag, Target, Settings, ChevronLeft, ChevronRight, FileText, Globe, Activity } from 'lucide-react';
+import { Search, Download, Plus, SlidersHorizontal, Flag, Target, Settings, ChevronLeft, ChevronRight, FileText, Globe, Activity, HelpCircle } from 'lucide-react';
 
 // Sabit üst navigasyon çubuğu (Sticky Navbar)
 export default function Navbar({
@@ -23,7 +23,8 @@ export default function Navbar({
   onOpenWorkspaceModal,
   onOpenSettingsModal,
   onOpenReport,
-  onOpenReconHub
+  onOpenReconHub,
+  onOpenTutorial
 }) {
   const filterScrollRef = useRef(null);
 
@@ -151,6 +152,15 @@ export default function Navbar({
             title="Ayarlar & API Kasası"
           >
             <Settings size={13} />
+          </button>
+
+          {/* Kullanım Kılavuzu & Rehber */}
+          <button
+            onClick={onOpenTutorial}
+            className="btn-icon"
+            title="Nasıl Kullanılır? (Kullanım Kılavuzu & Rehber - ?)"
+          >
+            <HelpCircle size={13} className="text-amber-400" />
           </button>
 
           {/* Dışa Aktar */}

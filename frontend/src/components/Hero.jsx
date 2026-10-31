@@ -14,7 +14,10 @@ import {
   Activity,
   FileText,
   ChevronDown,
-  MoreHorizontal
+  MoreHorizontal,
+  HelpCircle,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 
 // Ana karşılama ve sadeleştirilmiş komut/arama bölümü (Hero)
@@ -38,7 +41,8 @@ export default function Hero({
   onOpenSettingsModal,
   onOpenReport,
   onOpenReconHub,
-  hasDorks = false
+  hasDorks = false,
+  onOpenTutorial
 }) {
   const [engineMenuOpen, setEngineMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -246,6 +250,16 @@ export default function Hero({
             )}
           </button>
 
+          {/* Kullanım Kılavuzu & Rehber */}
+          <button
+            onClick={onOpenTutorial}
+            className="px-3 py-1.5 rounded-xl border border-white/[0.08] text-xs text-white/70 hover:text-white hover:border-amber-400/40 bg-white/[0.02] hover:bg-amber-400/[0.06] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm active:scale-95 group"
+            title="Görsel Kullanım Kılavuzu & Başlangıç Rehberi (?)"
+          >
+            <HelpCircle size={12} className="text-amber-400 group-hover:rotate-12 transition-transform" />
+            <span>Rehber</span>
+          </button>
+
           {/* Daha Fazla `···` Menüsü (Rapor, Çalışma Alanı, Ayarlar) */}
           <div className="relative z-40" ref={moreMenuRef}>
             <button
@@ -259,6 +273,16 @@ export default function Hero({
 
             {moreMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-[#0c0c0e] border border-white/20 backdrop-blur-3xl p-1.5 shadow-2xl shadow-black/95 z-[9999] animate-fadeIn">
+                <button
+                  onClick={() => {
+                    setMoreMenuOpen(false);
+                    if (onOpenTutorial) onOpenTutorial();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer text-left"
+                >
+                  <HelpCircle size={13} className="text-amber-400" />
+                  <span>Kullanım Kılavuzu</span>
+                </button>
                 {onOpenReport && (
                   <button
                     onClick={() => {
@@ -295,6 +319,20 @@ export default function Hero({
             )}
           </div>
         </div>
+
+        {/* İlk Kez Gelenler İçin Hızlı Başlangıç Rozeti */}
+        {!hasDorks && (
+          <div className="flex items-center justify-center mt-3">
+            <button
+              onClick={onOpenTutorial}
+              className="px-3.5 py-1.5 rounded-full bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-amber-400/40 text-xs text-white/70 hover:text-white transition-all flex items-center gap-2 cursor-pointer shadow-sm group active:scale-95"
+            >
+              <Sparkles size={12} className="text-amber-400 group-hover:scale-110 transition-transform" />
+              <span>Dorkful'a yeni misiniz? <strong className="text-amber-300 font-medium">Kullanım Kılavuzunu</strong> açın</span>
+              <ArrowRight size={11} className="text-white/40 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

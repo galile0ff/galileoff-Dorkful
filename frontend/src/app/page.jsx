@@ -17,6 +17,7 @@ import SettingsModal from '../components/SettingsModal';
 import ExecutiveReportModal from '../components/ExecutiveReportModal';
 import ReconHubModal from '../components/ReconHubModal';
 import AmbientBackground from '../components/AmbientBackground';
+import TutorialModal from '../components/TutorialModal';
 
 export default function Home() {
   const {
@@ -123,6 +124,10 @@ export default function Home() {
     // CTI & Pentest Yönetici Raporu
     isReportModalOpen,
     setIsReportModalOpen,
+    // Kullanım Kılavuzu & Tutorial
+    isTutorialOpen,
+    openTutorial,
+    closeTutorial,
   } = useDorkful();
 
   return (
@@ -265,6 +270,15 @@ export default function Home() {
         onSaveFinding={handleSaveFinding}
       />
 
+      {/* Görsel Kullanım Kılavuzu & Başlangıç Rehberi Modalı */}
+      <TutorialModal
+        isOpen={isTutorialOpen}
+        onClose={closeTutorial}
+        onOpenReconHub={() => openReconHub('dnsmap')}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenManageModal={() => openManageModal('dorks')}
+      />
+
       {/* Dinamik Ambient Işık Haleleri ve Siber Doku Efekti */}
       <AmbientBackground />
 
@@ -292,6 +306,7 @@ export default function Home() {
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onOpenReport={() => setIsReportModalOpen(true)}
         onOpenReconHub={() => openReconHub('dnsmap')}
+          onOpenTutorial={openTutorial}
       />
 
       {/* Ana Kaydırma Alanı */}
@@ -324,6 +339,7 @@ export default function Home() {
           onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           onOpenReconHub={() => openReconHub('dnsmap')}
+          onOpenTutorial={openTutorial}
           onOpenJSAnalysis={() => openReconHub('jsminer')}
           onOpenDNSMap={() => openReconHub('dnsmap')}
           onOpenReport={() => setIsReportModalOpen(true)}

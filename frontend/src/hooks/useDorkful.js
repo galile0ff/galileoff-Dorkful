@@ -68,8 +68,9 @@ export function useDorkful() {
   const [toast, setToast] = useState(null);
   const [navVisible, setNavVisible] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  // Dork Yönetim ve Şablon Stüdyosu Modalı
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [manageModalTab, setManageModalTab] = useState('dorks'); // 'dorks' | 'add' | 'categories'
   const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
   const [flaggingDork, setFlaggingDork] = useState(null);
   const [isFindingsModalOpen, setIsFindingsModalOpen] = useState(false);
@@ -88,8 +89,11 @@ export function useDorkful() {
   const [settings, setSettings] = useState(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
+  // Merkezi İstihbarat & Keşif Merkezi (Recon Hub) State'leri
+  const [isReconHubOpen, setIsReconHubOpen] = useState(false);
+  const [reconHubTab, setReconHubTab] = useState('dnsmap'); // 'dnsmap' | 'shodan' | 'censys' | 'github' | 'jsminer' | 'archive'
+
   // CRT.sh ve Wayback Canlı Keşif Sonuçları
-  const [isReconModalOpen, setIsReconModalOpen] = useState(false);
   const [reconType, setReconType] = useState('crtsh');
   const [reconTarget, setReconTarget] = useState('');
   const [subdomains, setSubdomains] = useState([]);
@@ -98,22 +102,18 @@ export function useDorkful() {
 
   // GitHub Canlı Kod Sızıntısı State'leri
   const [githubLeaks, setGithubLeaks] = useState([]);
-  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
 
   // JS Secret Miner (JavaScript Gizli API & Secret Avcısı) State'leri
   const [jsAnalysisResult, setJsAnalysisResult] = useState(null);
-  const [isJSAnalysisModalOpen, setIsJSAnalysisModalOpen] = useState(false);
   const [isJSAnalysisLoading, setIsJSAnalysisLoading] = useState(false);
 
   // Shodan Canlı Port & Zafiyet Analizi State'leri
   const [shodanHosts, setShodanHosts] = useState([]);
-  const [isShodanModalOpen, setIsShodanModalOpen] = useState(false);
   const [isShodanLoading, setIsShodanLoading] = useState(false);
 
   // Censys Canlı Host & Servis Keşfi State'leri
   const [censysHosts, setCensysHosts] = useState([]);
-  const [isCensysModalOpen, setIsCensysModalOpen] = useState(false);
   const [isCensysLoading, setIsCensysLoading] = useState(false);
 
   // Akıllı Teknoloji Tespiti (Tech Fingerprinting) Filtresi
@@ -121,7 +121,6 @@ export function useDorkful() {
 
   // DNS & Reverse IP Ağ Haritası State'leri
   const [dnsMapResult, setDnsMapResult] = useState(null);
-  const [isDNSMapModalOpen, setIsDNSMapModalOpen] = useState(false);
   const [isDNSMapLoading, setIsDNSMapLoading] = useState(false);
 
   // CTI & Pentest Yönetici Raporu (Executive Report) Modalı
@@ -136,6 +135,25 @@ export function useDorkful() {
   const showToast = useCallback((msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // Merkezi Modalları Açma / Kapatma Yardımcıları
+  const openReconHub = useCallback((tab = 'dnsmap') => {
+    setReconHubTab(tab);
+    setIsReconHubOpen(true);
+  }, []);
+
+  const closeReconHub = useCallback(() => {
+    setIsReconHubOpen(false);
+  }, []);
+
+  const openManageModal = useCallback((tab = 'dorks') => {
+    setManageModalTab(tab);
+    setIsManageModalOpen(true);
+  }, []);
+
+  const closeManageModal = useCallback(() => {
+    setIsManageModalOpen(false);
   }, []);
 
   // Çalışma alanlarını yükleme
@@ -280,7 +298,8 @@ export function useDorkful() {
       return;
     }
     const formatted = formatTargetDomain(rawTarget);
-    setIsJSAnalysisModalOpen(true);
+    setReconHubTab('jsminer');
+    setIsReconHubOpen(true);
     setIsJSAnalysisLoading(true);
     try {
       const res = await AnalyzeTargetJavaScript(formatted);
@@ -302,7 +321,8 @@ export function useDorkful() {
       return;
     }
     const formatted = formatTargetDomain(rawTarget);
-    setIsDNSMapModalOpen(true);
+    setReconHubTab('dnsmap');
+    setIsReconHubOpen(true);
     setIsDNSMapLoading(true);
     try {
       const res = await FetchDNSAndReverseIP(formatted);
@@ -350,7 +370,8 @@ export function useDorkful() {
     if (engine === 'crtsh') {
       setReconType('crtsh');
       setReconTarget(formatted);
-      setIsReconModalOpen(true);
+      setReconHubTab('archive');
+      setIsReconHubOpen(true);
       setIsReconLoading(true);
       try {
         const res = await FetchSubdomains(formatted);
@@ -368,7 +389,8 @@ export function useDorkful() {
     if (engine === 'wayback') {
       setReconType('wayback');
       setReconTarget(formatted);
-      setIsReconModalOpen(true);
+      setReconHubTab('archive');
+      setIsReconHubOpen(true);
       setIsReconLoading(true);
       try {
         const res = await FetchWaybackURLs(formatted);
@@ -506,7 +528,8 @@ export function useDorkful() {
     if (!raw || !raw.trim()) return;
     const formatted = formatTargetDomain(raw);
     const org = activeWorkspace?.githubOrg || formatted.split('.')[0] || "";
-    setIsGitHubModalOpen(true);
+    setReconHubTab('github');
+    setIsReconHubOpen(true);
     setIsGitHubLoading(true);
     try {
       const leaks = await SearchGitHubLeaks(formatted, org);
@@ -524,7 +547,8 @@ export function useDorkful() {
     const raw = customTarget || target;
     if (!raw || !raw.trim()) return;
     const formatted = formatTargetDomain(raw);
-    setIsShodanModalOpen(true);
+    setReconHubTab('shodan');
+    setIsReconHubOpen(true);
     setIsShodanLoading(true);
     try {
       const hosts = await SearchShodanHost(formatted);
@@ -543,7 +567,8 @@ export function useDorkful() {
     const raw = customTarget || target;
     if (!raw || !raw.trim()) return;
     const formatted = formatTargetDomain(raw);
-    setIsCensysModalOpen(true);
+    setReconHubTab('censys');
+    setIsReconHubOpen(true);
     setIsCensysLoading(true);
     try {
       const hosts = await SearchCensysHosts(formatted);
@@ -563,7 +588,8 @@ export function useDorkful() {
     const formatted = formatTargetDomain(raw);
     setReconType('crtsh');
     setReconTarget(formatted);
-    setIsReconModalOpen(true);
+    setReconHubTab('archive');
+    setIsReconHubOpen(true);
     setIsReconLoading(true);
     try {
       const res = await FetchSubdomains(formatted);
@@ -583,7 +609,8 @@ export function useDorkful() {
     const formatted = formatTargetDomain(raw);
     setReconType('wayback');
     setReconTarget(formatted);
-    setIsReconModalOpen(true);
+    setReconHubTab('archive');
+    setIsReconHubOpen(true);
     setIsReconLoading(true);
     try {
       const res = await FetchWaybackURLs(formatted);
@@ -894,10 +921,6 @@ export function useDorkful() {
     navVisible,
     splashDone,
     setSplashDone,
-    isAddModalOpen,
-    setIsAddModalOpen,
-    isManageModalOpen,
-    setIsManageModalOpen,
     findings,
     isFlagModalOpen,
     flaggingDork,
@@ -940,9 +963,21 @@ export function useDorkful() {
     handleUpdateWorkspace,
     handleDeleteWorkspace,
     reloadWorkspaces,
-    // CRT.sh & Wayback Modal State/Aksiyonları
-    isReconModalOpen,
-    setIsReconModalOpen,
+    // Dork Yönetim Modalı
+    isManageModalOpen,
+    setIsManageModalOpen,
+    manageModalTab,
+    setManageModalTab,
+    openManageModal,
+    closeManageModal,
+    // Merkezi İstihbarat & Keşif Hub State/Aksiyonları
+    isReconHubOpen,
+    setIsReconHubOpen,
+    reconHubTab,
+    setReconHubTab,
+    openReconHub,
+    closeReconHub,
+    // Keşif Sonuçları
     reconType,
     reconTarget,
     subdomains,
@@ -957,28 +992,20 @@ export function useDorkful() {
     setIsSettingsModalOpen,
     handleSaveSettings,
     handleTestAPIKey,
-    // GitHub Canlı Kod Sızıntısı State/Aksiyonları
+    // GitHub Canlı Kod Sızıntısı
     githubLeaks,
-    isGitHubModalOpen,
-    setIsGitHubModalOpen,
     isGitHubLoading,
     handleScanGitHubLeaks,
-    // Shodan Canlı Port & Zafiyet State/Aksiyonları
+    // Shodan Canlı Port & Zafiyet
     shodanHosts,
-    isShodanModalOpen,
-    setIsShodanModalOpen,
     isShodanLoading,
     handleScanShodan,
-    // Censys Canlı Host & Servis State/Aksiyonları
+    // Censys Canlı Host & Servis
     censysHosts,
-    isCensysModalOpen,
-    setIsCensysModalOpen,
     isCensysLoading,
     handleScanCensys,
     // JS Secret Miner (JavaScript Gizli API & Secret Avcısı)
     jsAnalysisResult,
-    isJSAnalysisModalOpen,
-    setIsJSAnalysisModalOpen,
     isJSAnalysisLoading,
     handleScanJavaScript,
     // Akıllı Teknoloji Parmak İzi (Tech Fingerprinting)
@@ -986,8 +1013,6 @@ export function useDorkful() {
     setSelectedTechFilter,
     // DNS & Reverse IP Haritası (Co-hosted Domains)
     dnsMapResult,
-    isDNSMapModalOpen,
-    setIsDNSMapModalOpen,
     isDNSMapLoading,
     handleScanDNSMap,
     // CTI & Pentest Yönetici Raporu (Executive Report)

@@ -33,10 +33,10 @@ export default function Home() {
     navVisible,
     splashDone,
     setSplashDone,
-    isAddModalOpen,
-    setIsAddModalOpen,
     isManageModalOpen,
-    setIsManageModalOpen,
+    manageModalTab,
+    openManageModal,
+    closeManageModal,
     findings,
     isFlagModalOpen,
     flaggingDork,
@@ -78,9 +78,12 @@ export default function Home() {
     handleCreateWorkspace,
     handleUpdateWorkspace,
     handleDeleteWorkspace,
-    // CRT.sh & Wayback Modal
-    isReconModalOpen,
-    setIsReconModalOpen,
+    // Merkezi İstihbarat & Keşif Hub
+    isReconHubOpen,
+    reconHubTab,
+    openReconHub,
+    closeReconHub,
+    // CRT.sh & Wayback
     reconType,
     reconTarget,
     subdomains,
@@ -96,26 +99,18 @@ export default function Home() {
     handleTestAPIKey,
     // GitHub Canlı Kod Sızıntısı
     githubLeaks,
-    isGitHubModalOpen,
-    setIsGitHubModalOpen,
     isGitHubLoading,
     handleScanGitHubLeaks,
     // Shodan Canlı Port & Zafiyet
     shodanHosts,
-    isShodanModalOpen,
-    setIsShodanModalOpen,
     isShodanLoading,
     handleScanShodan,
     // Censys Canlı Host & Servis
     censysHosts,
-    isCensysModalOpen,
-    setIsCensysModalOpen,
     isCensysLoading,
     handleScanCensys,
     // JS Secret Miner (JavaScript Gizli API & Secret Avcısı)
     jsAnalysisResult,
-    isJSAnalysisModalOpen,
-    setIsJSAnalysisModalOpen,
     isJSAnalysisLoading,
     handleScanJavaScript,
     // Akıllı Teknoloji Parmak İzi (Tech Fingerprinting)
@@ -123,60 +118,12 @@ export default function Home() {
     setSelectedTechFilter,
     // DNS & Reverse IP Ağ Haritası
     dnsMapResult,
-    isDNSMapModalOpen,
-    setIsDNSMapModalOpen,
     isDNSMapLoading,
     handleScanDNSMap,
     // CTI & Pentest Yönetici Raporu
     isReportModalOpen,
     setIsReportModalOpen,
   } = useDorkful();
-
-  // Merkezi İstihbarat & Keşif Hub State'i
-  const [isReconHubOpen, setIsReconHubOpen] = useState(false);
-  const [reconHubTab, setReconHubTab] = useState('dnsmap');
-
-  const openReconHub = (tab = 'dnsmap') => {
-    setReconHubTab(tab);
-    setIsReconHubOpen(true);
-  };
-
-  // 6 Keşif modalını tek bir merkez altında konsolide etme
-  const isAnyReconOpen =
-    isReconHubOpen ||
-    isDNSMapModalOpen ||
-    isShodanModalOpen ||
-    isCensysModalOpen ||
-    isGitHubModalOpen ||
-    isJSAnalysisModalOpen ||
-    isReconModalOpen;
-
-  const currentReconTab =
-    isDNSMapModalOpen ? 'dnsmap' :
-    isShodanModalOpen ? 'shodan' :
-    isCensysModalOpen ? 'censys' :
-    isGitHubModalOpen ? 'github' :
-    isJSAnalysisModalOpen ? 'jsminer' :
-    isReconModalOpen ? 'archive' :
-    reconHubTab;
-
-  const handleCloseReconHub = () => {
-    setIsReconHubOpen(false);
-    setIsDNSMapModalOpen(false);
-    setIsShodanModalOpen(false);
-    setIsCensysModalOpen(false);
-    setIsGitHubModalOpen(false);
-    setIsJSAnalysisModalOpen(false);
-    setIsReconModalOpen(false);
-  };
-
-  // Dork Yönetim ve Ekleme modallarını konsolide etme
-  const isAnyDorkModalOpen = isManageModalOpen || isAddModalOpen;
-  const initialDorkTab = isAddModalOpen ? 'add' : 'dorks';
-  const handleCloseDorkModals = () => {
-    setIsManageModalOpen(false);
-    setIsAddModalOpen(false);
-  };
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black text-white">
@@ -188,9 +135,9 @@ export default function Home() {
 
       {/* Konsolide Dork & Şablon Stüdyosu (Ekle & Yönet) */}
       <ManageDorksModal
-        isOpen={isAnyDorkModalOpen}
-        initialTab={initialDorkTab}
-        onClose={handleCloseDorkModals}
+        isOpen={isManageModalOpen}
+        initialTab={manageModalTab}
+        onClose={closeManageModal}
         templates={templates}
         categories={categories}
         onAddDork={handleAddCustomDork}
@@ -203,9 +150,9 @@ export default function Home() {
 
       {/* Merkezi İstihbarat & Keşif Merkezi (Ağ Haritası, Shodan, Censys, GitHub, JS Miner, CRT.sh/Wayback) */}
       <ReconHubModal
-        isOpen={isAnyReconOpen}
-        onClose={handleCloseReconHub}
-        initialTab={currentReconTab}
+        isOpen={isReconHubOpen}
+        onClose={closeReconHub}
+        initialTab={reconHubTab}
         target={target}
         onSelectNewTarget={(newTarget) => {
           setTarget(newTarget);
@@ -285,7 +232,7 @@ export default function Home() {
         onTestAPIKey={handleTestAPIKey}
         onResetToDefaults={handleResetToDefaults}
         onClearFindings={handleClearFindings}
-        onOpenManageModal={() => setIsManageModalOpen(true)}
+        onOpenManageModal={() => openManageModal('dorks')}
         onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
         onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
         templatesCount={templates.length}
@@ -337,10 +284,8 @@ export default function Home() {
         hasDorks={dorks.length > 0}
         onExport={handleExport}
         onLogoClick={scrollToTop}
-        onOpenAddModal={() => {
-          setIsManageModalOpen(true);
-        }}
-        onOpenManageModal={() => setIsManageModalOpen(true)}
+        onOpenAddModal={() => openManageModal('add')}
+        onOpenManageModal={() => openManageModal('dorks')}
         onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
         findingsCount={findings.length}
         onOpenWorkspaceModal={() => setIsWorkspaceModalOpen(true)}
@@ -369,8 +314,8 @@ export default function Home() {
           selectedFilter={filter}
           onFilterChange={setFilter}
           onLogoClick={() => setSplashDone(false)}
-          onOpenAddModal={() => setIsManageModalOpen(true)}
-          onOpenManageModal={() => setIsManageModalOpen(true)}
+          onOpenAddModal={() => openManageModal('add')}
+          onOpenManageModal={() => openManageModal('dorks')}
           onOpenFindingsModal={() => setIsFindingsModalOpen(true)}
           findingsCount={findings.length}
           selectedEngine={selectedEngine}
